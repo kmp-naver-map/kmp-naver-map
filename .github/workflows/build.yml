@@ -9,7 +9,8 @@ on:
 jobs:
   build:
     name: Build and Check
-    runs-on: macos-latest # iOS build requires macOS
+    # macos-14는 Apple Silicon(M1/M2) 러너로 Intel 기반 macos-latest보다 훨씬 빠릅니다.
+    runs-on: macos-14
 
     steps:
       - name: Checkout Repository
@@ -20,17 +21,35 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+
+      # Gradle 빌드 실행 및 캐싱을 더 효율적으로 관리해주는 공식 액션 사용
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-home-cache-cleanup: true
+
+      # Kotlin Native 의존성(Konan) 캐싱 - 빌드 시간을 획기적으로 줄여줍니다.
+      - name: Cache Konan
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: |
+            ${{ runner.os }}-konan-
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 더미 local.properties 생성
       - name: Create dummy local.properties
         run: |
           echo "NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID || 'dummy_id' }}" > local.properties
 
-      - name: Build with Gradle
-        run: ./gradlew build --stacktrace
-
-      - name: Run Tests
-        run: ./gradlew test
+      # 빌드 최적화:
+      # 1. build 대신 check를 사용하여 불필요한 아티팩트 생성을 줄이고 검증에 집중합니다.
+      # 2. --no-daemon을 사용하여 CI 환경의 메모리 문제를 방지합니다.
+      # 3. -Pkotlin.native.ignoreDisabledTargets=true로 환경에 맞지 않는 타겟 무시
+      - name: Build and Check
+        run: |
+          ./gradlew check --stacktrace --no-daemon \
+            -Pkotlin.native.ignoreDisabledTargets=true

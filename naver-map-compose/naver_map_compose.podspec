@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'naver_map_compose'
-    spec.version                  = '0.0.3'
-    spec.homepage                 = 'https://github.com/hiwhwnsgh/ComposeNaverMap'
+    spec.version                  = '0.0.1'
+    spec.homepage                 = 'https://github.com/kmp-naver-map/kmp-naver-map'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
     spec.license                  = ''

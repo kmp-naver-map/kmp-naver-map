@@ -1,0 +1,282 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
+package io.github.kmp.maps.naver.compose.overlay
+
+import cocoapods.NMapsMap.NMFMarker
+import cocoapods.NMapsMap.NMFOverlay
+import cocoapods.NMapsMap.NMF_MARKER_IMAGE_DEFAULT
+import io.github.kmp.maps.naver.compose.internal.toCommon
+import io.github.kmp.maps.naver.compose.internal.toNaver
+import io.github.kmp.maps.naver.compose.model.LatLng
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.useContents
+import platform.CoreGraphics.CGPointMake
+import platform.UIKit.UIColor
+
+actual open class Marker internal constructor(
+    internal val nativeMarker: NMFMarker
+) {
+    actual var tag: Any?
+        get() = nativeMarker.userInfo?.get("tag")
+        set(value) {
+            val userInfo = nativeMarker.userInfo?.toMutableMap() ?: mutableMapOf()
+            if (value == null) {
+                userInfo.remove("tag")
+            } else {
+                userInfo["tag"] = value
+            }
+            nativeMarker.userInfo = userInfo.toMap()
+        }
+
+    actual var position: LatLng
+        get() = nativeMarker.position.toCommon()
+        set(value) {
+            nativeMarker.position = value.toNaver()
+        }
+
+    actual var icon: OverlayImage?
+        get() = nativeMarker.iconImage?.let { OverlayImage(it) }
+        set(value) {
+            nativeMarker.iconImage = value?.nativeImage ?: NMF_MARKER_IMAGE_DEFAULT
+        }
+
+    actual var caption: String
+        get() = nativeMarker.captionText
+        set(value) {
+            nativeMarker.captionText = value
+        }
+
+    actual var subCaption: String
+        get() = nativeMarker.subCaptionText
+        set(value) {
+            nativeMarker.subCaptionText = value
+        }
+
+    actual var alpha: Float
+        get() = nativeMarker.alpha.toFloat()
+        set(value) {
+            nativeMarker.alpha = value.toDouble()
+        }
+
+    actual var isVisible: Boolean
+        get() = nativeMarker.hidden.not()
+        set(value) {
+            nativeMarker.hidden = value.not()
+        }
+
+    actual var isFlat: Boolean
+        get() = nativeMarker.flat
+        set(value) {
+            nativeMarker.flat = value
+        }
+
+    actual var isForceShowCaption: Boolean
+        get() = nativeMarker.isForceShowCaption
+        set(value) {
+            nativeMarker.isForceShowCaption = value
+        }
+
+    actual var isForceShowIcon: Boolean
+        get() = nativeMarker.isForceShowIcon
+        set(value) {
+            nativeMarker.isForceShowIcon = value
+        }
+
+    actual var zIndex: Int
+        get() = nativeMarker.zIndex.toInt()
+        set(value) {
+            nativeMarker.zIndex = value.toLong()
+        }
+
+    actual var globalZIndex: Int
+        get() = nativeMarker.globalZIndex.toInt()
+        set(value) {
+            nativeMarker.globalZIndex = value.toLong()
+        }
+
+    actual var width: Float
+        get() = nativeMarker.width.toFloat()
+        set(value) {
+            nativeMarker.width = if (value == MarkerSize.AUTO) 0.0 else value.toDouble()
+        }
+
+    actual var height: Float
+        get() = nativeMarker.height.toFloat()
+        set(value) {
+            nativeMarker.height = if (value == MarkerSize.AUTO) 0.0 else value.toDouble()
+        }
+
+    actual var angle: Float
+        get() = nativeMarker.angle.toFloat()
+        set(value) {
+            nativeMarker.angle = value.toDouble()
+        }
+
+    actual var anchor: Pair<Float, Float>
+        get() = nativeMarker.anchor.useContents { Pair(x.toFloat(), y.toFloat()) }
+        set(value) {
+            nativeMarker.anchor = CGPointMake(value.first.toDouble(), value.second.toDouble())
+        }
+
+    actual var minZoom: Double
+        get() = nativeMarker.minZoom
+        set(value) {
+            nativeMarker.minZoom = value
+        }
+
+    actual var maxZoom: Double
+        get() = nativeMarker.maxZoom
+        set(value) {
+            nativeMarker.maxZoom = value
+        }
+
+    actual var isMinZoomInclusive: Boolean
+        get() = nativeMarker.isMinZoomInclusive
+        set(value) {
+            nativeMarker.isMinZoomInclusive = value
+        }
+
+    actual var isMaxZoomInclusive: Boolean
+        get() = nativeMarker.isMaxZoomInclusive
+        set(value) {
+            nativeMarker.isMaxZoomInclusive = value
+        }
+
+    actual var captionColor: Int
+        get() = 0
+        set(value) {
+            nativeMarker.captionColor = uiColorFromInt(value)
+        }
+
+    actual var captionHaloColor: Int
+        get() = 0
+        set(value) {
+            nativeMarker.captionHaloColor = uiColorFromInt(value)
+        }
+
+    actual var captionTextSize: Float
+        get() = nativeMarker.captionTextSize.toFloat()
+        set(value) {
+            nativeMarker.captionTextSize = value.toDouble()
+        }
+
+    actual var captionMinZoom: Double
+        get() = nativeMarker.captionMinZoom
+        set(value) {
+            nativeMarker.captionMinZoom = value
+        }
+
+    actual var captionMaxZoom: Double
+        get() = nativeMarker.captionMaxZoom
+        set(value) {
+            nativeMarker.captionMaxZoom = value
+        }
+
+    actual var captionRequestedWidth: Float
+        get() = nativeMarker.captionRequestedWidth.toFloat()
+        set(value) {
+            nativeMarker.captionRequestedWidth = value.toDouble()
+        }
+
+    actual var captionOffset: Float
+        get() = nativeMarker.captionOffset.toFloat()
+        set(value) {
+            nativeMarker.captionOffset = value.toDouble()
+        }
+
+    actual var captionPerspectiveEnabled: Boolean
+        get() = nativeMarker.captionPerspectiveEnabled
+        set(value) {
+            nativeMarker.captionPerspectiveEnabled = value
+        }
+
+    actual var subCaptionColor: Int
+        get() = 0
+        set(value) {
+            nativeMarker.subCaptionColor = uiColorFromInt(value)
+        }
+
+    actual var subCaptionHaloColor: Int
+        get() = 0
+        set(value) {
+            nativeMarker.subCaptionHaloColor = uiColorFromInt(value)
+        }
+
+    actual var subCaptionTextSize: Float
+        get() = nativeMarker.subCaptionTextSize.toFloat()
+        set(value) {
+            nativeMarker.subCaptionTextSize = value.toDouble()
+        }
+
+    actual var subCaptionMinZoom: Double
+        get() = nativeMarker.subCaptionMinZoom
+        set(value) {
+            nativeMarker.subCaptionMinZoom = value
+        }
+
+    actual var subCaptionMaxZoom: Double
+        get() = nativeMarker.subCaptionMaxZoom
+        set(value) {
+            nativeMarker.subCaptionMaxZoom = value
+        }
+
+    actual var subCaptionRequestedWidth: Float
+        get() = nativeMarker.subCaptionRequestedWidth.toFloat()
+        set(value) {
+            nativeMarker.subCaptionRequestedWidth = value.toDouble()
+        }
+
+    actual var isHideCollidedMarkers: Boolean
+        get() = nativeMarker.isHideCollidedMarkers
+        set(value) {
+            nativeMarker.isHideCollidedMarkers = value
+        }
+
+    actual var isHideCollidedSymbols: Boolean
+        get() = nativeMarker.isHideCollidedSymbols
+        set(value) {
+            nativeMarker.isHideCollidedSymbols = value
+        }
+
+    actual var isHideCollidedCaptions: Boolean
+        get() = nativeMarker.isHideCollidedCaptions
+        set(value) {
+            nativeMarker.isHideCollidedCaptions = value
+        }
+
+    actual var isIconPerspectiveEnabled: Boolean
+        get() = nativeMarker.iconPerspectiveEnabled
+        set(value) {
+            nativeMarker.iconPerspectiveEnabled = value
+        }
+
+    actual var iconTintColor: Int
+        get() = 0
+        set(value) {
+            nativeMarker.iconTintColor = uiColorFromInt(value)
+        }
+
+    actual fun onClick(listener: (Marker) -> Boolean) {
+        val self = this
+        nativeMarker.touchHandler = { _: NMFOverlay? ->
+            listener(self)
+        }
+    }
+
+    actual fun remove() {
+        nativeMarker.mapView = null
+        nativeMarker.touchHandler = null
+    }
+
+    actual object MarkerSize {
+        actual val AUTO: Float = 0f
+    }
+}
+
+private fun uiColorFromInt(color: Int): UIColor {
+    val a = ((color shr 24) and 0xFF) / 255.0
+    val r = ((color shr 16) and 0xFF) / 255.0
+    val g = ((color shr 8) and 0xFF) / 255.0
+    val b = (color and 0xFF) / 255.0
+    return UIColor.colorWithRed(r, g, b, a)
+}

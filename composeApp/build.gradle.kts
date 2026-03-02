@@ -51,9 +51,9 @@ kotlin {
         }
         commonMain {
             // 2. BuildConfig 처럼 사용할 수 있도록 소스 생성 또는 Config 주입
-            val packageName = "io.github.jun.maps.naver"
+            val packageName = "io.github.kmp.naver.map"
             val generateSecrets = tasks.register("generateSecrets") {
-                val outDir = project.layout.buildDirectory.dir("generated/secrets/kotlin/io/github/jun/maps/naver")
+                val outDir = project.layout.buildDirectory.dir("generated/secrets/kotlin/io/github/kmp/naver/map")
                 outputs.dir(outDir)
                 doLast {
                     val secretsFile = outDir.get().file("Secrets.kt").asFile
@@ -92,11 +92,11 @@ kotlin {
 }
 
 android {
-    namespace = "io.github.jun.maps.naver"
+    namespace = "io.github.kmp.naver.map"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "io.github.jun.maps.naver"
+        applicationId = "io.github.kmp.naver.map"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1

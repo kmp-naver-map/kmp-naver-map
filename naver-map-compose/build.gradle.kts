@@ -66,7 +66,7 @@ kotlin {
 }
 
 android {
-    namespace = "io.github.hiwhwnsgh.maps.naver.compose"
+    namespace = "io.github.kmp.naver.map.compose"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -109,7 +109,7 @@ mavenPublishing {
     pom {
         name.set(project.findProperty("POM_NAME")?.toString() ?: "Naver Map Compose")
         description.set(project.findProperty("POM_DESCRIPTION")?.toString() ?: "A Kotlin Multiplatform Jetpack Compose wrapper for Naver Map SDK.")
-        url.set(project.findProperty("POM_URL")?.toString() ?: "https://github.com/hiwhwnsgh/ComposeNaverMap")
+        url.set(project.findProperty("POM_URL")?.toString() ?: "https://github.com/kmp-naver-map/ComposeNaverMap")
         licenses {
             license {
                 name.set(project.findProperty("POM_LICENCE_NAME")?.toString() ?: "The Apache Software License, Version 2.0")
@@ -117,9 +117,9 @@ mavenPublishing {
             }
         }
         scm {
-            url.set(project.findProperty("POM_URL")?.toString() ?: "https://github.com/hiwhwnsgh/ComposeNaverMap")
-            connection.set(project.findProperty("POM_SCM_CONNECTION")?.toString() ?: "scm:git:github.com/hiwhwnsgh/ComposeNaverMap.git")
-            developerConnection.set(project.findProperty("POM_SCM_DEV_CONNECTION")?.toString() ?: "scm:git:ssh://github.com/hiwhwnsgh/ComposeNaverMap.git")
+            url.set(project.findProperty("POM_URL")?.toString() ?: "https://github.com/kmp-naver-map/ComposeNaverMap")
+            connection.set(project.findProperty("POM_SCM_CONNECTION")?.toString() ?: "scm:git:github.com/kmp-naver-map/ComposeNaverMap.git")
+            developerConnection.set(project.findProperty("POM_SCM_DEV_CONNECTION")?.toString() ?: "scm:git:ssh://github.com/kmp-naver-map/ComposeNaverMap.git")
         }
         developers {
             developer {
