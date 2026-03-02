@@ -11,10 +11,21 @@ class NaverMapPlugin : Plugin<Project> {
             url = URI("https://repository.map.naver.com/archive/maven")
         }
 
-        // 2. 라이브러리 의존성을 자동으로 추가 (사용자가 implementation을 쓰지 않아도 되게 함)
-        // 프로젝트가 평가된 후(afterEvaluate) 실행하거나, 직접 configurations에 추가
-        project.configurations.getByName("commonMainApi").dependencies.add(
-            project.dependencies.create("io.github.hiwhwnsgh:naver-map-compose:${project.version}")
-        )
+        // 2. 라이브러리 의존성을 자동으로 추가
+        // KMP 프로젝트의 경우 commonMainApi에 추가하도록 유도
+        project.afterEvaluate {
+            val version = "1.0.1" // TODO: 버전을 동적으로 관리할 수 있는 방법 고려
+            val dependency = "io.github.kmp-naver-map:naver-map-compose:$version"
+            
+            val commonMainApi = project.configurations.findByName("commonMainApi")
+            if (commonMainApi != null) {
+                commonMainApi.dependencies.add(project.dependencies.create(dependency))
+            } else {
+                // KMP가 아닌 일반 안드로이드 프로젝트 등의 경우를 위해 implementation에도 추가 고려 가능
+                project.configurations.findByName("implementation")?.dependencies?.add(
+                    project.dependencies.create(dependency)
+                )
+            }
+        }
     }
 }

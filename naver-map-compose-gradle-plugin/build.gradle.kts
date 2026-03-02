@@ -15,7 +15,7 @@ version = project.property("VERSION_NAME") as String
 gradlePlugin {
     plugins {
         create("naverMapCompose") {
-            id = "io.github.hiwhwnsgh.naver-map"
+            id = "io.github.kmp-naver-map"
             implementationClass = "io.github.hiwhwnsgh.gradle.NaverMapPlugin"
             displayName = "Naver Map Compose Helper Plugin"
             description = "Automatically adds Naver Map repositories and dependencies."

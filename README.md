@@ -1,61 +1,68 @@
 # Naver Map Compose for Kotlin Multiplatform
 
-[![Maven Central](https://img.shields.io/badge/Maven_Central-v0.0.3-blue)](https://search.maven.org/artifact/io.github.hiwhwnsgh/naver-map-compose)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.kmp-naver-map/naver-map-compose)](https://search.maven.org/artifact/io.github.kmp-naver-map/naver-map-compose)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
-## Introduction
+## 소개
 
-**Naver Map Compose** is a wrapper library that brings the power of the [Naver Map SDK](https://navermaps.github.io/android-map-sdk/guide-en/) to [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/). It allows you to implement interactive maps for both Android and iOS from a single codebase.
+**Naver Map Compose**는 [네이버 지도 SDK](https://navermaps.github.io/android-map-sdk/guide-ko/)를 [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/)에서 사용할 수 있도록 래핑한 라이브러리입니다.
 
-## Installation
+## 설치 방법
 
-### 1. Add Gradle Plugin
-The easiest way to set up Naver Map is using our Gradle helper plugin. It automatically configures the required Maven repositories and adds the library dependency.
-
-Add this to your **root** `build.gradle.kts` (or sub-project):
+### 1. Gradle 플러그인 추가
+네이버 지도 저장소 설정과 의존성을 자동으로 관리하기 위해 **사용하려는 모듈(예: `composeApp`)**의 `build.gradle.kts`에 플러그인을 추가하세요.
 
 ```kotlin
+// composeApp/build.gradle.kts 또는 shared/build.gradle.kts
 plugins {
-    id("io.github.hiwhwnsgh.naver-map") version "0.0.3"
+    id("io.github.kmp-naver-map") version "1.0.0"
 }
 ```
 
-## Basic Usage
+> **참고**: 버전 카탈로그(`libs.versions.toml`)를 사용 중이라면 다음과 같이 설정할 수 있습니다:
+> ```kotlin
+> // libs.versions.toml
+> [plugins]
+> naver-map-compose = { id = "io.github.kmp-naver-map", version = "1.0.0" }
+>
+> // build.gradle.kts
+> plugins {
+>     alias(libs.plugins.naver.map.compose)
+> }
+> ```
 
-Initialize the SDK at the top level of your `App()` using `NaverMapSdkProvider`. This ensures the SDK is ready before any map is rendered.
+### 2. 플랫폼별 설정 (iOS)
+iOS 앱에서 지도를 사용하기 위해 `Podfile`에 다음 설정을 추가하세요.
+```ruby
+pod 'NMapsMap', '3.23.1'
+```
+
+## 기본 사용법
+
+애플리케이션의 최상위 컴포저블에서 `NaverMapSdkProvider`를 사용하여 SDK를 초기화합니다.
 
 ```kotlin
-import io.github.hiwhwnsgh.maps.naver.compose.ui.NaverMap
-import io.github.hiwhwnsgh.maps.naver.compose.NaverMapSdkProvider
+import io.github.kmp.maps.naver.compose.NaverMapSdkProvider
+import io.github.kmp.maps.naver.compose.ui.NaverMap
 
 @Composable
 fun App() {
-    // Initialize with your Naver Cloud Platform Client ID
-    NaverMapSdkProvider(clientId = "YOUR_NAVER_CLIENT_ID_HERE") {
-        MaterialTheme {
-            val seoul = LatLng(37.5666102, 126.9783881)
-            val mapState = rememberNaverMapState(
-                initialPosition = CameraPosition(target = seoul, zoom = 11.0)
+    // 네이버 클라우드 플랫폼에서 발급받은 Client ID 입력
+    NaverMapSdkProvider(clientId = "YOUR_NAVER_CLIENT_ID") {
+        NaverMap(modifier = Modifier.fillMaxSize()) {
+            Marker(
+                state = rememberMarkerState(position = LatLng(37.566, 126.978)),
+                caption = "서울시청"
             )
-
-            NaverMap(
-                modifier = Modifier.fillMaxSize(),
-                state = mapState
-            ) {
-                Marker(
-                    position = seoul,
-                    caption = "Seoul City Hall"
-                )
-            }
         }
     }
 }
 ```
 
-## Advanced Usage
+## 고급 사용법
 
-### Camera Control with MapEffect
-Use `MapEffect` to safely access the `NaverMapState` and perform declarative map operations, such as moving the camera, after the map is ready.
+### MapEffect를 이용한 카메라 제어
+지도가 준비된 후 `MapEffect`를 사용하여 `NaverMapState`에 안전하게 접근하고 카메라 이동과 같은 작업을 수행할 수 있습니다.
 
 ```kotlin
 NaverMap(...) {
@@ -68,19 +75,28 @@ NaverMap(...) {
 }
 ```
 
-## Key Components
+## 주요 컴포넌트
 
-- **`NaverMapSdkProvider`**: The root provider to initialize the SDK with your Client ID.
-- **`NaverMap`**: The main Composable for displaying the map.
-- **`NaverMapState`**: Controls the map's state, such as camera position and animations.
-- **`MapUiSettings`**: Configure map UI elements (zoom buttons, compass, logo).
+- **`NaverMapSdkProvider`**: 클라이언트 ID로 SDK를 초기화하는 루트 프로바이더입니다.
+- **`NaverMap`**: 지도를 표시하는 메인 컴포저블입니다.
+- **`NaverMapState`**: 카메라 위치 및 애니메이션과 같은 지도의 상태를 제어합니다.
+- **`MapUiSettings`**: 지도 UI 요소(줌 버튼, 나침반, 로고 등)를 설정합니다.
 
-## Contributing
+## 기여하기
 
-Contributions are welcome! If you're interested in helping out, please check out our [Contributing Guide](CONTRIBUTING.md) to learn how to get started.
+기여는 언제나 환영합니다! 버그 보고나 기능 제안은 Issue를 통해 남겨주세요.
 
-## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+## 라이선스 및 이용 약관
 
-Copyright 2024 Jun Cho
+### 프로젝트 라이선스
+본 라이브러리는 **Apache License 2.0**을 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+
+### 의존성 라이선스 및 주의사항
+본 라이브러리는 **네이버 지도 SDK**를 사용합니다. 이 라이브러리를 사용하는 개발자는 다음 사항을 준수해야 합니다:
+
+1.  **네이버 지도 SDK 라이선스**: 네이버 지도 SDK의 저작권은 (주)네이버 및 네이버클라우드(주)에 있습니다. SDK 사용과 관련된 자세한 라이선스는 [네이버 지도 SDK 공식 문서](https://navermaps.github.io/android-map-sdk/guide-ko/1.html)를 참조하세요.
+2.  **이용 약관 준수**: 본 라이브러리를 사용하는 서비스는 [네이버 클라우드 플랫폼 이용 약관](https://www.ncloud.com/policy/terms) 및 [Maps 서비스 이용 약관](https://www.ncloud.com/product/applicationService/maps)을 준수해야 합니다. 특히 **로고 노출 의무** 및 **사용량 제한**에 주의하시기 바랍니다.
+3.  **책임 제한**: 본 라이브러리는 오픈 소스 소프트웨어로서 "있는 그대로" 제공되며, 네이버 지도 SDK 자체의 장애나 약관 위반으로 인한 문제에 대해서는 책임을 지지 않습니다.
+
+Copyright 2026 Jun Cho
