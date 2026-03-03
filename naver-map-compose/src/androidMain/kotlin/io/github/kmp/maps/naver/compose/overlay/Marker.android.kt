@@ -4,7 +4,9 @@ import android.graphics.PointF
 import io.github.kmp.maps.naver.compose.internal.dpToPx
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
+import io.github.kmp.maps.naver.compose.model.Anchor
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.MarkerOptions
 
 actual open class Marker internal constructor(
     internal val nativeMarker: com.naver.maps.map.overlay.Marker
@@ -75,9 +77,9 @@ actual open class Marker internal constructor(
         get() = nativeMarker.angle
         set(value) { nativeMarker.angle = value }
 
-    actual var anchor: Pair<Float, Float>
-        get() = Pair(nativeMarker.anchor.x, nativeMarker.anchor.y)
-        set(value) { nativeMarker.anchor = PointF(value.first, value.second) }
+    actual var anchor: Anchor
+        get() = Anchor(nativeMarker.anchor.x, nativeMarker.anchor.y)
+        set(value) { nativeMarker.anchor = PointF(value.x, value.y) }
 
     actual var minZoom: Double
         get() = nativeMarker.minZoom
@@ -183,6 +185,48 @@ actual open class Marker internal constructor(
 
     actual fun remove() {
         nativeMarker.map = null
+    }
+
+    actual internal fun applyOptions(options: MarkerOptions) {
+        position = options.position
+        (options.icon as? OverlayImage)?.let { icon = it }
+        caption = options.caption
+        subCaption = options.subCaption
+        alpha = options.alpha
+        isVisible = options.isVisible
+        isFlat = options.isFlat
+        isForceShowCaption = options.isForceShowCaption
+        isForceShowIcon = options.isForceShowIcon
+        zIndex = options.zIndex
+        globalZIndex = options.globalZIndex
+        width = options.width
+        height = options.height
+        angle = options.angle
+        anchor = options.anchor
+        minZoom = options.minZoom
+        maxZoom = options.maxZoom
+        isMinZoomInclusive = options.isMinZoomInclusive
+        isMaxZoomInclusive = options.isMaxZoomInclusive
+        captionColor = options.captionColor
+        captionHaloColor = options.captionHaloColor
+        captionTextSize = options.captionTextSize
+        captionMinZoom = options.captionMinZoom
+        captionMaxZoom = options.captionMaxZoom
+        captionRequestedWidth = options.captionRequestedWidth
+        captionOffset = options.captionOffset
+        captionPerspectiveEnabled = options.captionPerspectiveEnabled
+        subCaptionColor = options.subCaptionColor
+        subCaptionHaloColor = options.subCaptionHaloColor
+        subCaptionTextSize = options.subCaptionTextSize
+        subCaptionMinZoom = options.subCaptionMinZoom
+        subCaptionMaxZoom = options.subCaptionMaxZoom
+        subCaptionRequestedWidth = options.subCaptionRequestedWidth
+        isHideCollidedMarkers = options.isHideCollidedMarkers
+        isHideCollidedSymbols = options.isHideCollidedSymbols
+        isHideCollidedCaptions = options.isHideCollidedCaptions
+        isIconPerspectiveEnabled = options.isIconPerspectiveEnabled
+        iconTintColor = options.iconTintColor
+        tag = options.tag
     }
 
     actual object MarkerSize {

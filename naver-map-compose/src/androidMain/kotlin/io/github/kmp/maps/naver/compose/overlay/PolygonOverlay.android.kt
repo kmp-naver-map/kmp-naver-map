@@ -3,6 +3,7 @@ package io.github.kmp.maps.naver.compose.overlay
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.PolygonOptions
 
 // overlay/PolygonOverlay.android.kt
 actual open class PolygonOverlay internal constructor(
@@ -44,6 +45,17 @@ actual open class PolygonOverlay internal constructor(
         nativePolygon.setOnClickListener {
             listener(this)
         }
+    }
+
+    actual internal fun applyOptions(options: PolygonOptions) {
+        coords = options.coords
+        holes = options.holes
+        fillColor = options.fillColor
+        outlineColor = options.outlineColor
+        outlineWidth = options.outlineWidth
+        zIndex = options.zIndex
+        isVisible = options.isVisible
+        tag = options.tag
     }
 
     actual fun remove() {

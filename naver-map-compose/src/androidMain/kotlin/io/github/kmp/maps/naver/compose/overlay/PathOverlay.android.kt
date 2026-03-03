@@ -4,6 +4,7 @@ import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.PathOverlay as NaverPathOverlay
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.PathOptions
 
 actual class PathOverlay(
     internal val nativePathOverlay: NaverPathOverlay = NaverPathOverlay()
@@ -108,6 +109,24 @@ actual class PathOverlay(
     }
     actual fun onClick(listener: (PathOverlay) -> Boolean) {
         onClickListener = listener
+    }
+
+    actual internal fun applyOptions(options: PathOptions) {
+        coords = options.coords
+        width = options.width
+        outlineWidth = options.outlineWidth
+        color = options.color
+        outlineColor = options.outlineColor
+        passedColor = options.passedColor
+        passedOutlineColor = options.passedOutlineColor
+        progress = options.progress
+        patternInterval = options.patternInterval
+        isHideCollidedSymbols = options.isHideCollidedSymbols
+        isHideCollidedMarkers = options.isHideCollidedMarkers
+        isHideCollidedCaptions = options.isHideCollidedCaptions
+        zIndex = options.zIndex
+        isVisible = options.isVisible
+        tag = options.tag
     }
 
     actual fun remove() {

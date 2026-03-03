@@ -9,6 +9,7 @@ import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.internal.toUIColor
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.ArrowheadPathOptions
 import kotlinx.cinterop.ExperimentalForeignApi
 actual class ArrowheadPathOverlay(
     internal val nativeArrowheadPathOverlay: NMFArrowheadPath = NMFArrowheadPath()
@@ -80,6 +81,19 @@ actual class ArrowheadPathOverlay(
 
     actual fun onClick(listener: (ArrowheadPathOverlay) -> Boolean) {
         onClickListener = listener
+    }
+
+    actual internal fun applyOptions(options: ArrowheadPathOptions) {
+        coords = options.coords
+        width = options.width
+        outlineWidth = options.outlineWidth
+        color = options.color
+        outlineColor = options.outlineColor
+        elevation = options.elevation
+        headSizeRatio = options.headSizeRatio
+        zIndex = options.zIndex
+        isVisible = options.isVisible
+        tag = options.tag
     }
 
     actual fun remove() {

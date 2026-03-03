@@ -1,7 +1,14 @@
 package io.github.kmp.maps.naver.compose.overlay
 
+import io.github.kmp.maps.naver.compose.model.Anchor
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.MarkerOptions
 
+/**
+ * 지도 위의 특정 위치에 표시되는 마커입니다.
+ *
+ * A marker displayed at a specific position on the map.
+ */
 expect open class Marker {
     var position: LatLng
     var icon: OverlayImage?
@@ -17,7 +24,7 @@ expect open class Marker {
     var width: Float
     var height: Float
     var angle: Float
-    var anchor: Pair<Float, Float>
+    var anchor: Anchor
     var minZoom: Double
     var maxZoom: Double
     var isMinZoomInclusive: Boolean
@@ -53,6 +60,7 @@ expect open class Marker {
     
     fun onClick(listener: (Marker) -> Boolean)
     fun remove()
+    internal fun applyOptions(options: MarkerOptions)
 
     object MarkerSize {
         val AUTO: Float

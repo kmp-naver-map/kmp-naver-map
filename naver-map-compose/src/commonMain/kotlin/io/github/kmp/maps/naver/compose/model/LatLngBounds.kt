@@ -1,6 +1,10 @@
 package io.github.kmp.maps.naver.compose.model
 
-// model/LatLngBounds.kt
+/**
+ * 남서(southwest)와 북동(northeast) 좌표로 정의되는 직사각형 영역입니다.
+ *
+ * A rectangular geographic region defined by southwest and northeast corners.
+ */
 data class LatLngBounds(
     val southwest: LatLng,
     val northeast: LatLng

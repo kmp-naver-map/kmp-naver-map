@@ -2,6 +2,11 @@ package io.github.kmp.maps.naver.compose.options
 
 import androidx.compose.runtime.Immutable
 
+/**
+ * 지도 UI 요소의 표시 여부를 설정합니다.
+ *
+ * Controls the visibility of map UI elements such as zoom controls, compass, and scale bar.
+ */
 @Immutable
 data class MapUiSettings(
     val isScrollGesturesEnabled: Boolean = true,

@@ -25,6 +25,13 @@ import io.github.kmp.maps.naver.compose.overlay.PathOverlay
 import io.github.kmp.maps.naver.compose.overlay.PolygonOverlay
 import io.github.kmp.maps.naver.compose.overlay.PolylineOverlay
 
+/**
+ * [NaverMapState]를 생성하고 기억합니다.
+ *
+ * Creates and remembers a [NaverMapState] instance.
+ *
+ * @param initialPosition 초기 카메라 위치. 기본값은 서울시청.
+ */
 @Composable
 fun rememberNaverMapState(
     initialPosition: CameraPosition = CameraPosition.DEFAULT
@@ -32,6 +39,15 @@ fun rememberNaverMapState(
     return remember { NaverMapState(initialPosition) }
 }
 
+/**
+ * 네이버 지도의 전체 상태를 관리하는 클래스입니다.
+ * 카메라 위치, UI 설정, 오버레이 관리, 이벤트 콜백 등을 포함합니다.
+ *
+ * Manages the overall state of a Naver Map, including camera position,
+ * UI settings, overlay management, and event callbacks.
+ *
+ * @param initialPosition 초기 카메라 위치.
+ */
 expect class NaverMapState(initialPosition: CameraPosition) {
     val isMapReady: Boolean
     var cameraPosition: CameraPosition

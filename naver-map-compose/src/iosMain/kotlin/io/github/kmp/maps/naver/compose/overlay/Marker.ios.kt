@@ -7,11 +7,14 @@ import cocoapods.NMapsMap.NMFOverlay
 import cocoapods.NMapsMap.NMF_MARKER_IMAGE_DEFAULT
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
+import io.github.kmp.maps.naver.compose.internal.toUIColor
+import io.github.kmp.maps.naver.compose.model.Anchor
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.MarkerOptions
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGPointMake
-import platform.UIKit.UIColor
+
 
 actual open class Marker internal constructor(
     internal val nativeMarker: NMFMarker
@@ -112,10 +115,10 @@ actual open class Marker internal constructor(
             nativeMarker.angle = value.toDouble()
         }
 
-    actual var anchor: Pair<Float, Float>
-        get() = nativeMarker.anchor.useContents { Pair(x.toFloat(), y.toFloat()) }
+    actual var anchor: Anchor
+        get() = nativeMarker.anchor.useContents { Anchor(x.toFloat(), y.toFloat()) }
         set(value) {
-            nativeMarker.anchor = CGPointMake(value.first.toDouble(), value.second.toDouble())
+            nativeMarker.anchor = CGPointMake(value.x.toDouble(), value.y.toDouble())
         }
 
     actual var minZoom: Double
@@ -145,13 +148,13 @@ actual open class Marker internal constructor(
     actual var captionColor: Int
         get() = 0
         set(value) {
-            nativeMarker.captionColor = uiColorFromInt(value)
+            nativeMarker.captionColor = value.toUIColor()
         }
 
     actual var captionHaloColor: Int
         get() = 0
         set(value) {
-            nativeMarker.captionHaloColor = uiColorFromInt(value)
+            nativeMarker.captionHaloColor = value.toUIColor()
         }
 
     actual var captionTextSize: Float
@@ -193,13 +196,13 @@ actual open class Marker internal constructor(
     actual var subCaptionColor: Int
         get() = 0
         set(value) {
-            nativeMarker.subCaptionColor = uiColorFromInt(value)
+            nativeMarker.subCaptionColor = value.toUIColor()
         }
 
     actual var subCaptionHaloColor: Int
         get() = 0
         set(value) {
-            nativeMarker.subCaptionHaloColor = uiColorFromInt(value)
+            nativeMarker.subCaptionHaloColor = value.toUIColor()
         }
 
     actual var subCaptionTextSize: Float
@@ -253,7 +256,7 @@ actual open class Marker internal constructor(
     actual var iconTintColor: Int
         get() = 0
         set(value) {
-            nativeMarker.iconTintColor = uiColorFromInt(value)
+            nativeMarker.iconTintColor = value.toUIColor()
         }
 
     actual fun onClick(listener: (Marker) -> Boolean) {
@@ -268,15 +271,49 @@ actual open class Marker internal constructor(
         nativeMarker.touchHandler = null
     }
 
-    actual object MarkerSize {
-        actual val AUTO: Float = 0f
+    actual internal fun applyOptions(options: MarkerOptions) {
+        position = options.position
+        (options.icon as? OverlayImage)?.let { icon = it }
+        caption = options.caption
+        subCaption = options.subCaption
+        alpha = options.alpha
+        isVisible = options.isVisible
+        isFlat = options.isFlat
+        isForceShowCaption = options.isForceShowCaption
+        isForceShowIcon = options.isForceShowIcon
+        zIndex = options.zIndex
+        globalZIndex = options.globalZIndex
+        width = options.width
+        height = options.height
+        angle = options.angle
+        anchor = options.anchor
+        minZoom = options.minZoom
+        maxZoom = options.maxZoom
+        isMinZoomInclusive = options.isMinZoomInclusive
+        isMaxZoomInclusive = options.isMaxZoomInclusive
+        captionColor = options.captionColor
+        captionHaloColor = options.captionHaloColor
+        captionTextSize = options.captionTextSize
+        captionMinZoom = options.captionMinZoom
+        captionMaxZoom = options.captionMaxZoom
+        captionRequestedWidth = options.captionRequestedWidth
+        captionOffset = options.captionOffset
+        captionPerspectiveEnabled = options.captionPerspectiveEnabled
+        subCaptionColor = options.subCaptionColor
+        subCaptionHaloColor = options.subCaptionHaloColor
+        subCaptionTextSize = options.subCaptionTextSize
+        subCaptionMinZoom = options.subCaptionMinZoom
+        subCaptionMaxZoom = options.subCaptionMaxZoom
+        subCaptionRequestedWidth = options.subCaptionRequestedWidth
+        isHideCollidedMarkers = options.isHideCollidedMarkers
+        isHideCollidedSymbols = options.isHideCollidedSymbols
+        isHideCollidedCaptions = options.isHideCollidedCaptions
+        isIconPerspectiveEnabled = options.isIconPerspectiveEnabled
+        iconTintColor = options.iconTintColor
+        tag = options.tag
     }
-}
 
-private fun uiColorFromInt(color: Int): UIColor {
-    val a = ((color shr 24) and 0xFF) / 255.0
-    val r = ((color shr 16) and 0xFF) / 255.0
-    val g = ((color shr 8) and 0xFF) / 255.0
-    val b = (color and 0xFF) / 255.0
-    return UIColor.colorWithRed(r, g, b, a)
+    actual object MarkerSize {
+        actual val AUTO: Float = -1f
+    }
 }

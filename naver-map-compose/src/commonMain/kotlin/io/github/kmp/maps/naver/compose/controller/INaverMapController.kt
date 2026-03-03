@@ -6,7 +6,13 @@ import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
 import io.github.kmp.maps.naver.compose.model.MapType
 
-// controller/INaverMapController.kt
+/**
+ * 네이버 지도를 직접 제어하기 위한 인터페이스입니다.
+ * [NaverMap]의 onMapReady 콜백에서 제공됩니다.
+ *
+ * Interface for directly controlling the Naver Map.
+ * Provided via the [NaverMap] composable's onMapReady callback.
+ */
 interface INaverMapController {
     val cameraPosition: CameraPosition
     val contentBounds: LatLngBounds

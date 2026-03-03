@@ -3,6 +3,7 @@ package io.github.kmp.maps.naver.compose.overlay
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.CircleOptions
 
 actual open class CircleOverlay internal constructor(
     internal val nativeCircle: com.naver.maps.map.overlay.CircleOverlay
@@ -43,6 +44,17 @@ actual open class CircleOverlay internal constructor(
         nativeCircle.setOnClickListener {
             listener(this)
         }
+    }
+
+    actual internal fun applyOptions(options: CircleOptions) {
+        center = options.center
+        radius = options.radius
+        fillColor = options.fillColor
+        outlineColor = options.outlineColor
+        outlineWidth = options.outlineWidth
+        zIndex = options.zIndex
+        isVisible = options.isVisible
+        tag = options.tag
     }
 
     actual fun remove() {

@@ -6,7 +6,9 @@ import cocoapods.NMapsMap.NMFInfoWindow
 import cocoapods.NMapsMap.NMFOverlay
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
+import io.github.kmp.maps.naver.compose.model.Anchor
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.InfoWindowOptions
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGPointMake
@@ -28,9 +30,9 @@ actual open class InfoWindow(internal val nativeInfoWindow: NMFInfoWindow = NMFI
         get() = nativeInfoWindow.hidden.not()
         set(value) { nativeInfoWindow.hidden = value.not() }
 
-    actual var anchor: Pair<Float, Float>
-        get() = nativeInfoWindow.anchor.useContents { Pair(x.toFloat(), y.toFloat()) }
-        set(value) { nativeInfoWindow.anchor = CGPointMake(value.first.toDouble(), value.second.toDouble()) }
+    actual var anchor: Anchor
+        get() = nativeInfoWindow.anchor.useContents { Anchor(x.toFloat(), y.toFloat()) }
+        set(value) { nativeInfoWindow.anchor = CGPointMake(value.x.toDouble(), value.y.toDouble()) }
 
     actual var offsetX: Int
         get() = nativeInfoWindow.offsetX.toInt()
@@ -55,11 +57,27 @@ actual open class InfoWindow(internal val nativeInfoWindow: NMFInfoWindow = NMFI
         }
     }
 
+    actual internal fun applyOptions(options: InfoWindowOptions) {
+        position = options.position
+        text = options.text
+        alpha = options.alpha
+        zIndex = options.zIndex
+        anchor = options.anchor
+        offsetX = options.offsetX
+        offsetY = options.offsetY
+        textColor = options.textColor
+        textSize = options.textSize
+        backgroundColor = options.backgroundColor
+        cornerRadiusDp = options.cornerRadiusDp
+        isVisible = options.isVisible
+        tag = options.tag
+    }
+
     actual fun close() {
         nativeInfoWindow.close()
     }
 
-    fun remove() {
+    internal fun remove() {
         close()
         nativeInfoWindow.touchHandler = null
     }

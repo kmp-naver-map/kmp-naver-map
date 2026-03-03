@@ -5,6 +5,7 @@ import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.options.LineCap
 import io.github.kmp.maps.naver.compose.options.LineJoin
+import io.github.kmp.maps.naver.compose.options.PolylineOptions
 
 actual open class PolylineOverlay internal constructor(
     internal val nativePolyline: com.naver.maps.map.overlay.PolylineOverlay
@@ -47,6 +48,17 @@ actual open class PolylineOverlay internal constructor(
 
     actual fun onClick(listener: (PolylineOverlay) -> Boolean) {
         nativePolyline.setOnClickListener { listener(this) }
+    }
+
+    actual internal fun applyOptions(options: PolylineOptions) {
+        coords = options.coords
+        color = options.color
+        width = options.width
+        capType = options.capType
+        joinType = options.joinType
+        zIndex = options.zIndex
+        isVisible = options.isVisible
+        tag = options.tag
     }
 
     actual fun remove() {

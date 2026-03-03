@@ -13,6 +13,7 @@ import io.github.kmp.maps.naver.compose.internal.toUIColor
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.options.LineCap
 import io.github.kmp.maps.naver.compose.options.LineJoin
+import io.github.kmp.maps.naver.compose.options.PolylineOptions
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSNumber
 
@@ -64,6 +65,17 @@ actual open class PolylineOverlay(internal val nativePolyline: NMFPolylineOverla
         nativePolyline.touchHandler = { _: NMFOverlay? ->
             listener(self)
         }
+    }
+
+    actual internal fun applyOptions(options: PolylineOptions) {
+        coords = options.coords
+        color = options.color
+        width = options.width
+        capType = options.capType
+        joinType = options.joinType
+        zIndex = options.zIndex
+        isVisible = options.isVisible
+        tag = options.tag
     }
 
     actual fun remove() {

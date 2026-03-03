@@ -8,6 +8,7 @@ import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.internal.toUIColor
 import io.github.kmp.maps.naver.compose.model.LatLng
+import io.github.kmp.maps.naver.compose.options.CircleOptions
 import kotlinx.cinterop.ExperimentalForeignApi
 
 actual class CircleOverlay internal constructor(
@@ -62,6 +63,17 @@ actual class CircleOverlay internal constructor(
         nativeCircle.touchHandler = { _: NMFOverlay? ->
             listener(self)
         }
+    }
+
+    actual internal fun applyOptions(options: CircleOptions) {
+        center = options.center
+        radius = options.radius
+        fillColor = options.fillColor
+        outlineColor = options.outlineColor
+        outlineWidth = options.outlineWidth
+        zIndex = options.zIndex
+        isVisible = options.isVisible
+        tag = options.tag
     }
 
     actual fun remove() {
