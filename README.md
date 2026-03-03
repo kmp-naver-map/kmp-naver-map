@@ -26,34 +26,47 @@ A declarative Naver Map SDK wrapper for Compose Multiplatform (Android & iOS).
 
 ### 1. Gradle 플러그인 추가
 
-**사용하려는 모듈(예: `composeApp`)**의 `build.gradle.kts`에 플러그인을 추가하세요.
+**사용하려는 모듈(예: `composeApp`)**의 `build.gradle.kts`에 플러그인을 추가하세요. 플러그인을 적용하면 네이버 지도 저장소 설정과 라이브러리 의존성이 자동으로 추가됩니다.
 
 ```kotlin
 // composeApp/build.gradle.kts 또는 shared/build.gradle.kts
 plugins {
-    id("io.github.kmp-naver-map") version "1.0.1"
+    id("io.github.kmp-naver-map") version "1.0.2"
+}
+
+// (선택 사항) 라이브러리 버전을 직접 지정하고 싶은 경우
+naverMapCompose {
+    version.set("1.0.2")
 }
 ```
 
-> **Version Catalog 사용 시:**
-> ```toml
-> # libs.versions.toml
-> [plugins]
-> naver-map-compose = { id = "io.github.kmp-naver-map", version = "1.0.1" }
-> ```
-> ```kotlin
-> // build.gradle.kts
-> plugins {
->     alias(libs.plugins.naver.map.compose)
-> }
-> ```
+### 2. iOS 설정 (CocoaPods)
 
-### 2. iOS 설정
+iOS에서 지도를 정상적으로 표시하려면 네이버 지도 SDK(`NMapsMap`) 의존성이 필요합니다. 자세한 내용은 [Kotlin Multiplatform CocoaPods 공식 문서](https://kotlinlang.org/docs/multiplatform-cocoapods-overview.html)를 참조하세요.
 
-iOS 앱에서 지도를 사용하려면 `Podfile`에 다음을 추가하세요.
+#### 옵션 A: build.gradle.kts에서 설정 (권장)
+Kotlin Multiplatform의 `cocoapods` 플러그인을 사용 중이라면 아래와 같이 추가하세요.
+
+```kotlin
+kotlin {
+    cocoapods {
+        ios.deploymentTarget = "13.0"
+        
+        pod("NMapsMap") {
+            version = "3.23.1"
+        }
+    }
+}
+```
+
+#### 옵션 B: Podfile에 직접 추가
+기존 iOS 프로젝트 형식을 유지하고 싶다면 `iosApp/Podfile`에 다음을 추가하세요.
 
 ```ruby
-pod 'NMapsMap', '3.23.1'
+target 'iosApp' do
+  use_frameworks!
+  pod 'NMapsMap', '3.23.1'
+end
 ```
 
 ---
@@ -98,85 +111,6 @@ NaverMap {
 }
 ```
 
-### Polyline / 폴리라인
-
-```kotlin
-NaverMap {
-    Polyline(
-        coords = listOf(
-            LatLng(37.566, 126.978),
-            LatLng(37.551, 126.988),
-            LatLng(37.540, 127.000)
-        ),
-        width = 5f
-    )
-}
-```
-
-### Polygon / 폴리곤
-
-```kotlin
-NaverMap {
-    Polygon(
-        coords = listOf(
-            LatLng(37.566, 126.978),
-            LatLng(37.551, 126.988),
-            LatLng(37.540, 126.968)
-        )
-    )
-}
-```
-
-### Circle / 원
-
-```kotlin
-NaverMap {
-    Circle(
-        center = LatLng(37.566, 126.978),
-        radius = 500.0 // 미터
-    )
-}
-```
-
-### Path / 경로
-
-```kotlin
-NaverMap {
-    Path(
-        coords = listOf(
-            LatLng(37.566, 126.978),
-            LatLng(37.551, 126.988)
-        ),
-        progress = 0.5 // 50% 진행
-    )
-}
-```
-
-### ArrowheadPath / 화살표 경로
-
-```kotlin
-NaverMap {
-    ArrowheadPath(
-        coords = listOf(
-            LatLng(37.566, 126.978),
-            LatLng(37.551, 126.988)
-        ),
-        width = 15f
-    )
-}
-```
-
-### InfoWindow / 정보 창
-
-```kotlin
-NaverMap {
-    InfoWindow(
-        position = LatLng(37.566, 126.978),
-        text = "정보 창 내용"
-    )
-}
-```
-
 ### Camera Control / 카메라 제어
 
 `MapEffect`를 사용하면 지도 준비 후 `NaverMapState`에 접근하여 카메라를 제어할 수 있습니다.
@@ -192,26 +126,6 @@ NaverMap {
 }
 ```
 
-### MapUiSettings / 지도 UI 설정
-
-```kotlin
-NaverMap(
-    uiSettings = MapUiSettings(
-        isZoomControlEnabled = true,
-        isCompassEnabled = false,
-        isLocationButtonEnabled = true
-    )
-)
-```
-
-### Location Tracking / 위치 추적
-
-```kotlin
-NaverMap(
-    locationTrackingMode = LocationTrackingMode.Follow
-)
-```
-
 ---
 
 ## Troubleshooting / 문제 해결
@@ -219,7 +133,7 @@ NaverMap(
 | 증상 | 해결 방법 |
 |------|----------|
 | 지도가 표시되지 않음 | `NaverMapSdkProvider`가 `NaverMap`을 감싸고 있는지, Client ID가 올바른지 확인하세요. |
-| iOS에서 빌드 오류 | `pod install` 실행 후 `.xcworkspace`로 열어야 합니다. |
+| iOS에서 빌드 오류 | `pod install` 실행 후 `.xcworkspace`로 열어야 합니다. `cocoapods` 플러그인 사용 시 `generateComposeResClass` 태스크 관련 오류가 나면 Gradle 버전을 확인하세요. |
 | `Could not resolve` 의존성 오류 | Gradle 플러그인 사용 시 네이버 저장소가 자동 추가됩니다. 수동 설정 시 `https://repository.map.naver.com/archive/maven`을 추가하세요. |
 
 ---
@@ -228,25 +142,17 @@ NaverMap(
 
 기여는 언제나 환영합니다! 자세한 내용은 [CONTRIBUTING.md](CONTRIBUTING.md)를 참조하세요.
 
-- 버그 보고 및 기능 제안: [Issues](https://github.com/kmp-naver-map/kmp-naver-map/issues)
-- Pull Request 환영합니다.
-
 ---
 
 ## License / 라이선스
 
 ### 프로젝트 라이선스
-
-본 라이브러리는 **Apache License 2.0**을 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+본 라이브러리는 **Apache License 2.0**을 따릅니다.
 
 ### 의존성 라이선스 및 주의사항
-
-본 라이브러리는 **네이버 지도 SDK**를 사용합니다. 이 라이브러리를 사용하는 개발자는 다음 사항을 준수해야 합니다:
-
-1.  **네이버 지도 SDK 라이선스**: 네이버 지도 SDK의 저작권은 (주)네이버 및 네이버클라우드(주)에 있습니다. SDK 사용과 관련된 자세한 라이선스는 [네이버 지도 SDK 공식 문서](https://navermaps.github.io/android-map-sdk/guide-ko/1.html)를 참조하세요.
-2.  **이용 약관 준수**: 본 라이브러리를 사용하는 서비스는 [네이버 클라우드 플랫폼 이용 약관](https://www.ncloud.com/policy/terms) 및 [Maps 서비스 이용 약관](https://www.ncloud.com/product/applicationService/maps)을 준수해야 합니다. 특히 **로고 노출 의무** 및 **사용량 제한**에 주의하시기 바랍니다.
-3.  **책임 제한**: 본 라이브러리는 오픈 소스 소프트웨어로서 "있는 그대로" 제공되며, 네이버 지도 SDK 자체의 장애나 약관 위반으로 인한 문제에 대해서는 책임을 지지 않습니다.
+본 라이브러리는 **네이버 지도 SDK**를 사용합니다. 
+1. **네이버 지도 SDK 라이선스**: 저작권은 (주)네이버 및 네이버클라우드(주)에 있습니다.
+2. **이용 약관 준수**: [네이버 클라우드 플랫폼 이용 약관](https://www.ncloud.com/policy/terms)을 준수해야 하며, 특히 **로고 노출 의무**를 확인하세요.
 
 ---
-
 Copyright 2026 Jun Cho
