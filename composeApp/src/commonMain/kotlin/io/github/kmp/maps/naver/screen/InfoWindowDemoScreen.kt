@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import io.github.kmp.maps.naver.compose.model.Anchor
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.state.rememberNaverMapState
@@ -70,7 +71,7 @@ fun InfoWindowDemoScreen() {
                 offsetX = offsetX,
                 offsetY = offsetY,
                 zIndex = 500000,
-                anchor = Pair(0.5f, 1.0f),
+                anchor = Anchor(0.5f, 1.0f),
                 cornerRadiusDp = 12f,
                 textSize = 16f,
                 tag = "TestInfoWindow"

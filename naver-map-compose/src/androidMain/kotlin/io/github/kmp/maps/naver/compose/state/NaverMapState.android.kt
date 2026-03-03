@@ -163,7 +163,7 @@ actual class NaverMapState actual constructor(
             overlay.iconHeight = if (_locationOverlayOptions.height == Marker.MarkerSize.AUTO)
                 com.naver.maps.map.overlay.Marker.SIZE_AUTO
             else _locationOverlayOptions.height.dpToPx().toInt()
-            overlay.anchor = PointF(_locationOverlayOptions.anchor.first, _locationOverlayOptions.anchor.second)
+            overlay.anchor = PointF(_locationOverlayOptions.anchor.x, _locationOverlayOptions.anchor.y)
             overlay.bearing = _locationOverlayOptions.bearing
             overlay.globalZIndex = _locationOverlayOptions.globalZIndex
             
@@ -184,7 +184,7 @@ actual class NaverMapState actual constructor(
             overlay.subIconHeight = if (_locationOverlayOptions.subIconHeight == Marker.MarkerSize.AUTO)
                 com.naver.maps.map.overlay.Marker.SIZE_AUTO
             else _locationOverlayOptions.subIconHeight.dpToPx().toInt()
-            overlay.subAnchor = PointF(_locationOverlayOptions.subIconAnchor.first, _locationOverlayOptions.subIconAnchor.second)
+            overlay.subAnchor = PointF(_locationOverlayOptions.subIconAnchor.x, _locationOverlayOptions.subIconAnchor.y)
         }
     }
 
@@ -274,7 +274,7 @@ actual class NaverMapState actual constructor(
             width = if (options.width == Marker.MarkerSize.AUTO) com.naver.maps.map.overlay.Marker.SIZE_AUTO else options.width.dpToPx().toInt()
             height = if (options.height == Marker.MarkerSize.AUTO) com.naver.maps.map.overlay.Marker.SIZE_AUTO else options.height.dpToPx().toInt()
             angle = options.angle
-            anchor = PointF(options.anchor.first, options.anchor.second)
+            anchor = PointF(options.anchor.x, options.anchor.y)
             minZoom = options.minZoom
             maxZoom = options.maxZoom
             isMinZoomInclusive = options.isMinZoomInclusive
@@ -454,7 +454,7 @@ actual class NaverMapState actual constructor(
             position = options.position.toNaver()
             alpha = options.alpha
             zIndex = options.zIndex
-            anchor = PointF(options.anchor.first, options.anchor.second)
+            anchor = PointF(options.anchor.x, options.anchor.y)
             offsetX = options.offsetX
             offsetY = options.offsetY
             adapter = object : com.naver.maps.map.overlay.InfoWindow.ViewAdapter() {
@@ -465,7 +465,7 @@ actual class NaverMapState actual constructor(
                         setTextSize(TypedValue.COMPLEX_UNIT_SP, options.textSize)
                         val shape = GradientDrawable().apply {
                             setColor(options.backgroundColor)
-                            cornerRadius = options.cornerRadiusDp.toFloat().dpToPx()
+                            cornerRadius = options.cornerRadiusDp.dpToPx()
                         }
                         background = shape
                         val p = 8.toFloat().dpToPx().toInt()

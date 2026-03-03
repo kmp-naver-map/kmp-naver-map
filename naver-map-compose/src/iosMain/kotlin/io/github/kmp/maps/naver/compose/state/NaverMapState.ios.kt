@@ -138,7 +138,7 @@ actual class NaverMapState actual constructor(
             (_locationOverlayOptions.icon as? OverlayImage)?.let { overlay.icon = it.nativeImage }
             overlay.iconWidth = _locationOverlayOptions.width.toDouble()
             overlay.iconHeight = _locationOverlayOptions.height.toDouble()
-            overlay.anchor = CGPointMake(_locationOverlayOptions.anchor.first.toDouble(), _locationOverlayOptions.anchor.second.toDouble())
+            overlay.anchor = CGPointMake(_locationOverlayOptions.anchor.x.toDouble(), _locationOverlayOptions.anchor.y.toDouble())
             overlay.heading = _locationOverlayOptions.bearing.toDouble()
             overlay.globalZIndex = _locationOverlayOptions.globalZIndex.toLong()
             overlay.circleRadius = _locationOverlayOptions.circleRadius
@@ -152,7 +152,7 @@ actual class NaverMapState actual constructor(
             }
             overlay.subIconWidth = _locationOverlayOptions.subIconWidth.toDouble()
             overlay.subIconHeight = _locationOverlayOptions.subIconHeight.toDouble()
-            overlay.subAnchor = CGPointMake(_locationOverlayOptions.subIconAnchor.first.toDouble(), _locationOverlayOptions.subIconAnchor.second.toDouble())
+            overlay.subAnchor = CGPointMake(_locationOverlayOptions.subIconAnchor.x.toDouble(), _locationOverlayOptions.subIconAnchor.y.toDouble())
         }
     }
 
@@ -260,7 +260,7 @@ actual class NaverMapState actual constructor(
             width = options.width.toDouble()
             height = options.height.toDouble()
             angle = options.angle.toDouble()
-            anchor = CGPointMake(options.anchor.first.toDouble(), options.anchor.second.toDouble())
+            anchor = CGPointMake(options.anchor.x.toDouble(), options.anchor.y.toDouble())
             minZoom = options.minZoom
             maxZoom = options.maxZoom
             isMinZoomInclusive = options.isMinZoomInclusive
