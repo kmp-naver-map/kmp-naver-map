@@ -55,7 +55,7 @@ jobs:
             -Pkotlin.native.ignoreDisabledTargets=true \
             -Pkotlin.incremental=false \
             -Pkotlin.incremental.native=false \
-            -x linkDebugTestIosSimulatorArm64 \
-            -x linkDebugTestIosArm64 \
-            -x iosSimulatorArm64Test \
-            -x iosArm64Test
+            -x :composeApp:linkDebugTestIosSimulatorArm64 \
+            -x :composeApp:linkDebugTestIosArm64 \
+            -x :naver-map-compose:linkDebugTestIosSimulatorArm64 \
+            -x :naver-map-compose:linkDebugTestIosArm64
