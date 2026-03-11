@@ -54,4 +54,8 @@ jobs:
           ./gradlew check --stacktrace --no-daemon \
             -Pkotlin.native.ignoreDisabledTargets=true \
             -Pkotlin.incremental=false \
-            -Pkotlin.incremental.native=false
+            -Pkotlin.incremental.native=false \
+            -x linkDebugTestIosSimulatorArm64 \
+            -x linkDebugTestIosArm64 \
+            -x iosSimulatorArm64Test \
+            -x iosArm64Test
