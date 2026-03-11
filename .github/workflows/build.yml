@@ -33,9 +33,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.konan
-          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle.kts') }}
+          key: ${{ runner.os }}-konan-v2-${{ hashFiles('**/*.gradle.kts') }}
           restore-keys: |
-            ${{ runner.os }}-konan-
+            ${{ runner.os }}-konan-v2-
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -52,4 +52,6 @@ jobs:
       - name: Build and Check
         run: |
           ./gradlew check --stacktrace --no-daemon \
-            -Pkotlin.native.ignoreDisabledTargets=true
+            -Pkotlin.native.ignoreDisabledTargets=true \
+            -Pkotlin.incremental=false \
+            -Pkotlin.incremental.native=false
