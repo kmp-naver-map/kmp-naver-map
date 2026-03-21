@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cocoapods.NMapsMap.*
+import io.github.kmp.maps.naver.compose.internal.dpToPoints
 import io.github.kmp.maps.naver.compose.internal.*
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.model.LatLng
@@ -58,8 +59,8 @@ actual class NaverMapState actual constructor(
                 applyCameraConstraints()
                 setupListeners(value)
 
-                // 초기 상태 동기화
-                _cameraPosition = value.mapView.cameraPosition.toCommon()
+                // moveCamera는 비동기라 읽어오지 않고 initialPosition을 직접 사용
+                _cameraPosition = initialPosition
                 _contentRegion.value = value.mapView.contentRegion.exteriorRing().points()
                     .filterIsInstance<NMGLatLng>().toCommonBounds()
             }
@@ -71,6 +72,9 @@ actual class NaverMapState actual constructor(
     actual val lastLocation: LatLng? get() = _lastLocation.value
 
     actual var onLocationChange: ((LatLng) -> Unit)? = null
+
+    // Strong reference to prevent ARC from releasing the delegate
+    private var locationManagerDelegate: NMFLocationManagerDelegateProtocol? = null
 
     private val _markers = mutableListOf<Marker>()
     private val _polylines = mutableListOf<PolylineOverlay>()
@@ -114,8 +118,10 @@ actual class NaverMapState actual constructor(
     actual var locationTrackingMode: LocationTrackingMode
         get() = _locationTrackingMode.value
         set(value) {
-            _locationTrackingMode.value = value
-            applyLocationTrackingMode()
+            if (_locationTrackingMode.value != value) {
+                _locationTrackingMode.value = value
+                applyLocationTrackingMode()
+            }
         }
 
     private fun applyLocationTrackingMode() {
@@ -232,7 +238,7 @@ actual class NaverMapState actual constructor(
             }
         }
 
-        NMFLocationManager.sharedInstance()?.addDelegate(object : NSObject(), NMFLocationManagerDelegateProtocol {
+        locationManagerDelegate = object : NSObject(), NMFLocationManagerDelegateProtocol {
             override fun locationManager(locationManager: NMFLocationManager?, didUpdateLocations: List<*>?) {
                 val location = didUpdateLocations?.lastOrNull() as? platform.CoreLocation.CLLocation
                 if (location != null) {
@@ -241,7 +247,8 @@ actual class NaverMapState actual constructor(
                     onLocationChange?.invoke(latLng)
                 }
             }
-        })
+        }
+        NMFLocationManager.sharedInstance()?.addDelegate(locationManagerDelegate!!)
     }
 
     actual fun addMarker(options: MarkerOptions): Marker {
@@ -300,7 +307,7 @@ actual class NaverMapState actual constructor(
             line = NMGLineString.lineStringWithPoints(options.coords.map { it.toNaver() })
             color = options.color.toUIColor(); width = options.width.toDouble()
             capType = options.capType.toNaver(); joinType = options.joinType.toNaver()
-            zIndex = options.zIndex.toLong(); globalZIndex = options.zIndex.toLong()
+            zIndex = options.zIndex.toLong()
             hidden = !options.isVisible; mapView = naverMap
         }
         val polyline = PolylineOverlay(nativePolyline); polyline.tag = options.tag; _polylines.add(polyline)
@@ -317,7 +324,7 @@ actual class NaverMapState actual constructor(
             polygon = NMGPolygon.polygonWithRing(exteriorRing, interiorRings = interiorRings)
             fillColor = options.fillColor.toUIColor(); outlineColor = options.outlineColor.toUIColor()
             outlineWidth = options.outlineWidth.toULong()
-            zIndex = options.zIndex.toLong(); globalZIndex = options.zIndex.toLong()
+            zIndex = options.zIndex.toLong()
             hidden = !options.isVisible; mapView = naverMap
         }
         val polygon = PolygonOverlay(nativePolygon); polygon.tag = options.tag; _polygons.add(polygon)
@@ -332,7 +339,7 @@ actual class NaverMapState actual constructor(
             center = options.center.toNaver(); radius = options.radius
             fillColor = options.fillColor.toUIColor(); outlineColor = options.outlineColor.toUIColor()
             outlineWidth = options.outlineWidth.toDouble()
-            zIndex = options.zIndex.toLong(); globalZIndex = options.zIndex.toLong()
+            zIndex = options.zIndex.toLong()
             hidden = !options.isVisible; mapView = naverMap
         }
         val circle = CircleOverlay(nativeCircle); circle.tag = options.tag; _circles.add(circle)
@@ -378,23 +385,25 @@ actual class NaverMapState actual constructor(
     actual fun clearArrowheadPaths() { _arrowheadPaths.forEach { it.remove() }; _arrowheadPaths.clear() }
 
     actual fun addInfoWindow(options: InfoWindowOptions, marker: Marker?): InfoWindow {
-        val nativeInfoWindow = NMFInfoWindow.infoWindow().apply {
+        val nativeInfoWindow = NMFInfoWindow.infoWindow()
+        val infoWindow = InfoWindow(nativeInfoWindow)
+        nativeInfoWindow.apply {
             position = options.position.toNaver(); alpha = options.alpha.toDouble()
-            zIndex = options.zIndex.toLong(); globalZIndex = options.zIndex.toLong()
+            zIndex = options.zIndex.toLong()
             offsetX = options.offsetX.toLong(); offsetY = options.offsetY.toLong()
             dataSource = object : NSObject(), NMFOverlayImageDataSourceProtocol {
                 override fun viewWithOverlay(overlay: NMFOverlay): UIView {
                     val padding = 8.0
                     val label = UILabel().apply {
-                        text = options.text; textColor = options.textColor.toUIColor()
-                        font = UIFont.systemFontOfSize(options.textSize.toDouble()); sizeToFit()
+                        text = infoWindow.text; textColor = infoWindow.textColor.toUIColor()
+                        font = UIFont.systemFontOfSize(infoWindow.textSize.toDouble()); sizeToFit()
                     }
                     val width = label.frame.useContents { size.width } + padding * 2
                     val height = label.frame.useContents { size.height } + padding * 2
                     val container = UIView().apply {
-                        backgroundColor = options.backgroundColor.toUIColor()
-                        layer.cornerRadius = options.cornerRadiusDp.toDouble()
-                        clipsToBounds = options.cornerRadiusDp > 0
+                        backgroundColor = infoWindow.backgroundColor.toUIColor()
+                        layer.cornerRadius = infoWindow.cornerRadiusDp.toDouble()
+                        clipsToBounds = infoWindow.cornerRadiusDp > 0
                         setFrame(CGRectMake(0.0, 0.0, width, height))
                     }
                     label.setFrame(CGRectMake(padding, padding, label.frame.useContents { size.width }, label.frame.useContents { size.height }))
@@ -403,7 +412,7 @@ actual class NaverMapState actual constructor(
                 }
             }
         }
-        val infoWindow = InfoWindow(nativeInfoWindow); infoWindow.tag = options.tag
+        infoWindow.applyOptions(options)
         if (marker != null) nativeInfoWindow.openWithMarker(marker.nativeMarker) else naverMap?.let { nativeInfoWindow.openWithMapView(it) }
         _infoWindows.add(infoWindow)
         return infoWindow
@@ -416,16 +425,31 @@ actual class NaverMapState actual constructor(
         clearMarkers(); clearPolylines(); clearPolygons(); clearCircles(); clearPaths(); clearArrowheadPaths(); clearInfoWindows()
     }
 
-    actual fun animateCamera(position: CameraPosition, durationMs: Int, onFinish: (() -> Unit)?) {
+    actual fun animateCamera(position: CameraPosition, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int, onFinish: (() -> Unit)?) {
+        val nativeAnimation = when (animation) {
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationEaseOut
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationFly
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationLinear
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationNone
+        }
         val update = NMFCameraUpdate.cameraUpdateWithPosition(position.toNaver()).apply {
-            animation = NMFCameraUpdateAnimation.NMFCameraUpdateAnimationLinear
+            this.animation = nativeAnimation
             animationDuration = durationMs.toDouble() / 1000.0
         }
         naverMap?.moveCamera(update) { isCancelled -> if (!isCancelled) onFinish?.invoke() }
     }
 
-    actual fun fitBounds(bounds: LatLngBounds, paddingDp: Int) {
-        val update = NMFCameraUpdate.cameraUpdateWithFitBounds(bounds.toNaver(), paddingDp.toDouble())
+    actual fun fitBounds(bounds: LatLngBounds, paddingDp: Int, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int) {
+        val nativeAnimation = when (animation) {
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationEaseOut
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationFly
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationLinear
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationNone
+        }
+        val update = NMFCameraUpdate.cameraUpdateWithFitBounds(bounds.toNaver(), paddingDp.dpToPoints()).apply {
+            this.animation = nativeAnimation
+            animationDuration = durationMs.toDouble() / 1000.0
+        }
         naverMap?.moveCamera(update)
     }
 
@@ -434,4 +458,5 @@ actual class NaverMapState actual constructor(
     actual fun setIndoorEnabled(enabled: Boolean) { naverMap?.indoorMapEnabled = enabled }
     actual fun setBuildingHeight(height: Float) { naverMap?.buildingHeight = height }
     actual fun setSymbolScale(scale: Float) { naverMap?.symbolScale = scale.toDouble() }
+    actual fun setCustomStyleId(customStyleId: String?) { naverMap?.customStyleId = customStyleId }
 }

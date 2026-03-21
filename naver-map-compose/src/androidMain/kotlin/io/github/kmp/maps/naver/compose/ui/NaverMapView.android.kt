@@ -1,5 +1,8 @@
 package io.github.kmp.maps.naver.compose.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -12,11 +15,23 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.naver.maps.map.MapView
+import com.naver.maps.map.util.FusedLocationSource
 import io.github.kmp.maps.naver.compose.NaverMapSdk
 import io.github.kmp.maps.naver.compose.controller.AndroidNaverMapController
 import io.github.kmp.maps.naver.compose.controller.INaverMapController
 import io.github.kmp.maps.naver.compose.state.NaverMapState
 import com.naver.maps.map.NaverMapSdk as NativeNaverMapSdk
+
+private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
+
+private fun Context.findActivity(): Activity? {
+    var ctx = this
+    while (ctx is ContextWrapper) {
+        if (ctx is Activity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
 
 @Composable
 actual fun NaverMapView(
@@ -26,17 +41,15 @@ actual fun NaverMapView(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val mapView = remember { MapView(context) }
-    val currentOnMapReady by rememberUpdatedState(onMapReady)
-
-    // SDK 초기화
-    DisposableEffect(Unit) {
+    val activity = remember(context) { context.findActivity() }
+    val mapView = remember {
         if (NaverMapSdk.clientId.isNotEmpty()) {
             NativeNaverMapSdk.getInstance(context).client =
                 NativeNaverMapSdk.NcpKeyClient(NaverMapSdk.clientId)
         }
-        onDispose { }
+        MapView(context)
     }
+    val currentOnMapReady by rememberUpdatedState(onMapReady)
 
     // Lifecycle 관리
     DisposableEffect(lifecycleOwner) {
@@ -71,6 +84,7 @@ actual fun NaverMapView(
             mapView.apply {
                 getMapAsync { naverMap ->
                     state._context = context
+                    state.locationSourceFactory = { activity?.let { FusedLocationSource(it, LOCATION_PERMISSION_REQUEST_CODE) } }
                     state.naverMap = naverMap
                     currentOnMapReady(AndroidNaverMapController(naverMap))
                 }

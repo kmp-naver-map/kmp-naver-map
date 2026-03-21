@@ -6,6 +6,7 @@ import cocoapods.NMapsMap.NMFMarker
 import cocoapods.NMapsMap.NMFOverlay
 import cocoapods.NMapsMap.NMF_MARKER_IMAGE_DEFAULT
 import io.github.kmp.maps.naver.compose.internal.toCommon
+import io.github.kmp.maps.naver.compose.internal.toArgbInt
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.internal.toUIColor
 import io.github.kmp.maps.naver.compose.model.Anchor
@@ -146,13 +147,13 @@ actual open class Marker internal constructor(
         }
 
     actual var captionColor: Int
-        get() = 0
+        get() = nativeMarker.captionColor.toArgbInt()
         set(value) {
             nativeMarker.captionColor = value.toUIColor()
         }
 
     actual var captionHaloColor: Int
-        get() = 0
+        get() = nativeMarker.captionHaloColor.toArgbInt()
         set(value) {
             nativeMarker.captionHaloColor = value.toUIColor()
         }
@@ -194,13 +195,13 @@ actual open class Marker internal constructor(
         }
 
     actual var subCaptionColor: Int
-        get() = 0
+        get() = nativeMarker.subCaptionColor.toArgbInt()
         set(value) {
             nativeMarker.subCaptionColor = value.toUIColor()
         }
 
     actual var subCaptionHaloColor: Int
-        get() = 0
+        get() = nativeMarker.subCaptionHaloColor.toArgbInt()
         set(value) {
             nativeMarker.subCaptionHaloColor = value.toUIColor()
         }
@@ -254,7 +255,7 @@ actual open class Marker internal constructor(
         }
 
     actual var iconTintColor: Int
-        get() = 0
+        get() = nativeMarker.iconTintColor.toArgbInt()
         set(value) {
             nativeMarker.iconTintColor = value.toUIColor()
         }

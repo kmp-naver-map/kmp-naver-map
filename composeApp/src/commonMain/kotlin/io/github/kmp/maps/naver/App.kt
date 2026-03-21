@@ -32,7 +32,7 @@ fun App() {
     val navController = rememberNavController()
 
     // 1. Secrets 객체(빌드 시 생성됨)를 사용하여 클라이언트 ID 참조
-    NaverMapSdkProvider(clientId = "NAVER_Client_ID") {
+    NaverMapSdkProvider(clientId = "3hxpuj0ssz") {
         MaterialTheme {
             NavHost(navController = navController, startDestination = Screen.Home.route) {
                 composable(Screen.Home.route) {

@@ -44,12 +44,16 @@ actual open class InfoWindow(internal val nativeInfoWindow: NaverInfoWindow) {
         get() = nativeInfoWindow.tag
         set(value) { nativeInfoWindow.tag = value }
 
-    // 텍스트 및 스타일 속성 (안드로이드에서는 Adapter를 통해 처리해야 하므로 상태만 유지하거나 Adapter를 갱신함)
     actual var text: String = ""
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var textColor: Int = 0xFF000000.toInt()
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var textSize: Float = 14f
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var backgroundColor: Int = 0xFFFFFFFF.toInt()
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var cornerRadiusDp: Float = 0f
+        set(value) { field = value; nativeInfoWindow.invalidate() }
 
     actual fun onClick(listener: (InfoWindow) -> Boolean) {
         nativeInfoWindow.setOnClickListener {

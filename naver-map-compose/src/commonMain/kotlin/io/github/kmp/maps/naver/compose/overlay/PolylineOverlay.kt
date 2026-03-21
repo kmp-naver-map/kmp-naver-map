@@ -14,7 +14,7 @@ expect class PolylineOverlay {
     var coords: List<LatLng>
     var color: Int
     var width: Float
-    val pattern: List<Float>
+    var pattern: List<Float>
     var capType: LineCap
     var joinType: LineJoin
     var zIndex: Int

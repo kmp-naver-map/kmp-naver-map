@@ -31,17 +31,26 @@ class AndroidNaverMapController(
     ) {
         val update = CameraUpdate.toCameraPosition(position.toNaver())
             .animate(animation.toNaver(), durationMs.toLong())
+        if (onFinish != null) {
+            naverMap.addOnCameraIdleListener(object : NaverMap.OnCameraIdleListener {
+                override fun onCameraIdle() {
+                    naverMap.removeOnCameraIdleListener(this)
+                    onFinish()
+                }
+            })
+        }
         naverMap.moveCamera(update)
     }
 
     override fun fitBounds(
         bounds: LatLngBounds,
         paddingDp: Int,
-        animation: io.github.kmp.maps.naver.compose.model.CameraAnimation
+        animation: io.github.kmp.maps.naver.compose.model.CameraAnimation,
+        durationMs: Int
     ) {
         val paddingPx = paddingDp.toFloat().dpToPx().toInt()
         val update = CameraUpdate.fitBounds(bounds.toNaver(), paddingPx)
-            .animate(animation.toNaver())
+            .animate(animation.toNaver(), durationMs.toLong())
         naverMap.moveCamera(update)
     }
 

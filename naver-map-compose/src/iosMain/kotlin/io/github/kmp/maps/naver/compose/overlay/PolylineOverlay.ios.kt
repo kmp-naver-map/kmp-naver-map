@@ -71,6 +71,7 @@ actual open class PolylineOverlay(internal val nativePolyline: NMFPolylineOverla
         coords = options.coords
         color = options.color
         width = options.width
+        if (options.pattern.isNotEmpty()) pattern = options.pattern
         capType = options.capType
         joinType = options.joinType
         zIndex = options.zIndex
@@ -85,6 +86,7 @@ actual open class PolylineOverlay(internal val nativePolyline: NMFPolylineOverla
 
     actual var tag: Any? = null
 
-    actual val pattern: List<Float>
+    actual var pattern: List<Float>
         get() = nativePolyline.pattern?.map { (it as NSNumber).floatValue } ?: emptyList()
+        set(value) { nativePolyline.pattern = value.map { NSNumber(float = it) } }
 }

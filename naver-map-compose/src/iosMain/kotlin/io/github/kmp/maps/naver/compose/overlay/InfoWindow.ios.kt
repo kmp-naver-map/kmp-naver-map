@@ -45,10 +45,15 @@ actual open class InfoWindow(internal val nativeInfoWindow: NMFInfoWindow = NMFI
     actual var tag: Any? = null
 
     actual var text: String = ""
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var textColor: Int = 0xFF000000.toInt()
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var textSize: Float = 14f
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var backgroundColor: Int = 0xFFFFFFFF.toInt()
+        set(value) { field = value; nativeInfoWindow.invalidate() }
     actual var cornerRadiusDp: Float = 0f
+        set(value) { field = value; nativeInfoWindow.invalidate() }
 
     actual fun onClick(listener: (InfoWindow) -> Boolean) {
         val self = this

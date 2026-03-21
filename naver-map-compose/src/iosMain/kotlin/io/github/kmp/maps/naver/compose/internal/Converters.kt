@@ -154,6 +154,17 @@ internal fun Int.toCommonLineJoin(): LineJoin = when (this) {
 }
 
 // ──────────────────────────────
+// Unit conversion
+// ──────────────────────────────
+
+/**
+ * iOS는 UIKit points 단위를 사용하며 1pt = 1dp (논리 단위)로 변환 불필요.
+ * Android의 dpToPx()와 대칭적으로 사용하기 위해 명시적 함수로 제공.
+ */
+internal fun Int.dpToPoints(): Double = this.toDouble()
+internal fun Float.dpToPoints(): Double = this.toDouble()
+
+// ──────────────────────────────
 // Image / Utils
 // ──────────────────────────────
 

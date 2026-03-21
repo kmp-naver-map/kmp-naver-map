@@ -47,13 +47,15 @@ class IosNaverMapController(
     override fun fitBounds(
         bounds: LatLngBounds,
         paddingDp: Int,
-        animation: CameraAnimation
+        animation: CameraAnimation,
+        durationMs: Int
     ) {
         val update = NMFCameraUpdate.cameraUpdateWithFitBounds(
             bounds.toNaver(),
             padding = paddingDp.toDouble()
         )
         update.animation = animation.toIos()
+        update.animationDuration = durationMs.toDouble() / 1000.0
         mapView.moveCamera(update)
     }
 

@@ -28,7 +28,8 @@ interface INaverMapController {
     fun fitBounds(
         bounds: LatLngBounds,
         paddingDp: Int = 48,
-        animation: CameraAnimation = CameraAnimation.Easing
+        animation: CameraAnimation = CameraAnimation.Easing,
+        durationMs: Int = 800
     )
     
     fun setMapType(mapType: MapType)

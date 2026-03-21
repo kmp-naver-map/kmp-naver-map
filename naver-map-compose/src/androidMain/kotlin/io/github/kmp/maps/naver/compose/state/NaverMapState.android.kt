@@ -64,15 +64,18 @@ actual class NaverMapState actual constructor(
             field = value
             _isMapReady.value = value != null
             if (value != null) {
+                // initialPosition 적용 (listeners 설정 전에)
+                value.moveCamera(CameraUpdate.toCameraPosition(initialPosition.toNaver()))
+
                 value.locationSource = _locationSource
                 applyUiSettings()
                 applyLocationTrackingMode()
                 applyLocationOverlayOptions()
                 applyCameraConstraints()
                 setupListeners(value)
-                
-                // 초기 상태 동기화
-                _cameraPosition = value.cameraPosition.toCommon()
+
+                // moveCamera는 비동기라 읽어오지 않고 initialPosition을 직접 사용
+                _cameraPosition = initialPosition
                 _contentRegion.value = value.contentRegion.toCommonBounds()
             }
         }
@@ -84,6 +87,9 @@ actual class NaverMapState actual constructor(
             _locationSource = value
             naverMap?.locationSource = value
         }
+
+    // locationTrackingMode가 None이 아닐 때 처음 사용 시 생성되는 factory
+    internal var locationSourceFactory: (() -> LocationSource?)? = null
 
     private var _lastLocation = mutableStateOf<LatLng?>(null)
     actual val lastLocation: LatLng? get() = _lastLocation.value
@@ -141,6 +147,9 @@ actual class NaverMapState actual constructor(
         }
 
     private fun applyLocationTrackingMode() {
+        if (_locationTrackingMode.value != LocationTrackingMode.None && _locationSource == null) {
+            locationSource = locationSourceFactory?.invoke()
+        }
         naverMap?.locationTrackingMode = _locationTrackingMode.value.toNaver()
     }
 
@@ -326,7 +335,9 @@ actual class NaverMapState actual constructor(
             tag = options.tag
             map = naverMap
         }
-        return PolylineOverlay(nativePolyline).also { _polylines.add(it) }
+        return PolylineOverlay(nativePolyline).apply {
+            if (options.pattern.isNotEmpty()) pattern = options.pattern
+        }.also { _polylines.add(it) }
     }
 
     actual fun removePolyline(overlay: PolylineOverlay) {
@@ -450,7 +461,9 @@ actual class NaverMapState actual constructor(
 
     actual fun addInfoWindow(options: InfoWindowOptions, marker: Marker?): InfoWindow {
         val adapterContext = _context ?: throw IllegalStateException("Context is not available. Ensure the map is ready.")
-        val nativeInfoWindow = com.naver.maps.map.overlay.InfoWindow().apply {
+        val nativeInfoWindow = com.naver.maps.map.overlay.InfoWindow()
+        val infoWindow = InfoWindow(nativeInfoWindow)
+        nativeInfoWindow.apply {
             position = options.position.toNaver()
             alpha = options.alpha
             zIndex = options.zIndex
@@ -458,14 +471,14 @@ actual class NaverMapState actual constructor(
             offsetX = options.offsetX
             offsetY = options.offsetY
             adapter = object : com.naver.maps.map.overlay.InfoWindow.ViewAdapter() {
-                override fun getView(infoWindow: com.naver.maps.map.overlay.InfoWindow): View {
+                override fun getView(iw: com.naver.maps.map.overlay.InfoWindow): View {
                     return TextView(adapterContext).apply {
-                        text = options.text
-                        setTextColor(options.textColor)
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, options.textSize)
+                        text = infoWindow.text
+                        setTextColor(infoWindow.textColor)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, infoWindow.textSize)
                         val shape = GradientDrawable().apply {
-                            setColor(options.backgroundColor)
-                            cornerRadius = options.cornerRadiusDp.dpToPx()
+                            setColor(infoWindow.backgroundColor)
+                            cornerRadius = infoWindow.cornerRadiusDp.dpToPx()
                         }
                         background = shape
                         val p = 8.toFloat().dpToPx().toInt()
@@ -475,8 +488,9 @@ actual class NaverMapState actual constructor(
             }
             tag = options.tag
         }
+        infoWindow.applyOptions(options)
         if (marker != null) nativeInfoWindow.open(marker.nativeMarker) else naverMap?.let { nativeInfoWindow.open(it) }
-        return InfoWindow(nativeInfoWindow).also { _infoWindows.add(it) }
+        return infoWindow.also { _infoWindows.add(it) }
     }
 
     actual fun removeInfoWindow(infoWindow: InfoWindow) {
@@ -499,18 +513,41 @@ actual class NaverMapState actual constructor(
         clearInfoWindows()
     }
 
-    actual fun animateCamera(position: CameraPosition, durationMs: Int, onFinish: (() -> Unit)?) {
-        val update = CameraUpdate.toCameraPosition(position.toNaver()).animate(CameraAnimation.Easing, durationMs.toLong())
-        naverMap?.moveCamera(update)
+    actual fun animateCamera(position: CameraPosition, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int, onFinish: (() -> Unit)?) {
+        val nativeAnimation = when (animation) {
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> CameraAnimation.Easing
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> CameraAnimation.Fly
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> CameraAnimation.Linear
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> CameraAnimation.None
+        }
+        val update = CameraUpdate.toCameraPosition(position.toNaver()).animate(nativeAnimation, durationMs.toLong())
+        val map = naverMap ?: return
+        if (onFinish != null) {
+            map.addOnCameraIdleListener(object : NaverMap.OnCameraIdleListener {
+                override fun onCameraIdle() {
+                    map.removeOnCameraIdleListener(this)
+                    onFinish.invoke()
+                }
+            })
+        }
+        map.moveCamera(update)
     }
 
-    actual fun fitBounds(bounds: LatLngBounds, paddingDp: Int) {
+    actual fun fitBounds(bounds: LatLngBounds, paddingDp: Int, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int) {
         val paddingPx = paddingDp.toFloat().dpToPx().toInt()
-        naverMap?.moveCamera(CameraUpdate.fitBounds(bounds.toNaver(), paddingPx))
+        val nativeAnimation = when (animation) {
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> CameraAnimation.Easing
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> CameraAnimation.Fly
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> CameraAnimation.Linear
+            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> CameraAnimation.None
+        }
+        val update = CameraUpdate.fitBounds(bounds.toNaver(), paddingPx).animate(nativeAnimation, durationMs.toLong())
+        naverMap?.moveCamera(update)
     }
     actual fun setMapType(mapType: MapType) { naverMap?.mapType = mapType.toNaver() }
     actual fun setNightMode(enabled: Boolean) { naverMap?.isNightModeEnabled = enabled }
     actual fun setIndoorEnabled(enabled: Boolean) { naverMap?.isIndoorEnabled = enabled }
     actual fun setBuildingHeight(height: Float) { naverMap?.buildingHeight = height }
     actual fun setSymbolScale(scale: Float) { naverMap?.symbolScale = scale }
+    actual fun setCustomStyleId(customStyleId: String?) { naverMap?.customStyleId = customStyleId }
 }

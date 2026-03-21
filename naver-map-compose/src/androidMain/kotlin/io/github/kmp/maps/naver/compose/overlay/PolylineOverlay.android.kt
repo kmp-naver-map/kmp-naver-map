@@ -23,8 +23,11 @@ actual open class PolylineOverlay internal constructor(
         set(value) { nativePolyline.width = value.toInt() }
 
 
-    actual val pattern: List<Float>
-        get() = nativePolyline.pattern.map { it.toFloat() } ?: emptyList()
+    // Android SDK의 pattern은 val(read-only)이므로 생성 시에만 적용 가능
+    private var _pattern: List<Float> = emptyList()
+    actual var pattern: List<Float>
+        get() = _pattern
+        set(value) { _pattern = value }
 
     actual var capType: LineCap
         get() = nativePolyline.capType.toCommon()
@@ -54,6 +57,7 @@ actual open class PolylineOverlay internal constructor(
         coords = options.coords
         color = options.color
         width = options.width
+        if (options.pattern.isNotEmpty()) pattern = options.pattern
         capType = options.capType
         joinType = options.joinType
         zIndex = options.zIndex

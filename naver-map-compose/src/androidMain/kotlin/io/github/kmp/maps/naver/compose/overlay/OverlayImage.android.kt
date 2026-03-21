@@ -33,6 +33,12 @@ actual class OverlayImage internal constructor(internal val nativeImage: NativeO
             OverlayImage(NativeOverlayImage.fromPath(absolutePath))
 
         /**
+         * Android drawable 리소스 ID로부터 OverlayImage 객체를 생성합니다. (Android 전용)
+         */
+        fun fromResource(@androidx.annotation.DrawableRes resId: Int): OverlayImage =
+            OverlayImage(NativeOverlayImage.fromResource(resId))
+
+        /**
          * Bitmap으로부터 OverlayImage 객체를 생성합니다. (Android 전용)
          */
         fun fromBitmap(bitmap: Bitmap): OverlayImage =

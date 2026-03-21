@@ -2,6 +2,7 @@ package io.github.kmp.maps.naver.compose.state
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import io.github.kmp.maps.naver.compose.model.CameraAnimation
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
@@ -112,13 +113,16 @@ expect class NaverMapState(initialPosition: CameraPosition) {
 
     fun animateCamera(
         position: CameraPosition,
+        animation: CameraAnimation = CameraAnimation.Easing,
         durationMs: Int = 800,
         onFinish: (() -> Unit)? = null
     )
 
     fun fitBounds(
         bounds: LatLngBounds,
-        paddingDp: Int = 48
+        paddingDp: Int = 48,
+        animation: CameraAnimation = CameraAnimation.Easing,
+        durationMs: Int = 800
     )
 
     fun setMapType(mapType: MapType)
@@ -126,4 +130,5 @@ expect class NaverMapState(initialPosition: CameraPosition) {
     fun setIndoorEnabled(enabled: Boolean)
     fun setBuildingHeight(height: Float)
     fun setSymbolScale(scale: Float)
+    fun setCustomStyleId(customStyleId: String?)
 }
