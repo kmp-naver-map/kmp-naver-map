@@ -35,6 +35,6 @@ data class LocationOverlayOptions(
     val subIcon: Any? = null,
     val subIconWidth: Float = Marker.MarkerSize.AUTO,
     val subIconHeight: Float = Marker.MarkerSize.AUTO,
-    val subIconAnchor: Anchor = Anchor.Center,
+    val subIconAnchor: Anchor = Anchor.CenterBottom,
     val isSubIconVisible: Boolean = true,
 )
