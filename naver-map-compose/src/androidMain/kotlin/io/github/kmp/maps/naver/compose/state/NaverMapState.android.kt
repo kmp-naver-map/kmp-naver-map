@@ -6,6 +6,7 @@ import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,6 +14,7 @@ import com.naver.maps.map.CameraAnimation
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.LocationSource
 import com.naver.maps.map.NaverMap
+import io.github.kmp.maps.naver.compose.ui.hasLocationPermission
 import io.github.kmp.maps.naver.compose.internal.*
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.model.LatLng
@@ -44,7 +46,7 @@ actual class NaverMapState actual constructor(
     private val _isMapReady = mutableStateOf(false)
     actual val isMapReady: Boolean get() = _isMapReady.value
 
-    internal var _context: Context? = null
+    internal var _context: Context? = null  // 내부 Context (dpToPx 변환 등에서 사용)
 
     // 카메라 위치를 State로 관리하여 실시간 동기화
     private var _cameraPosition by mutableStateOf(initialPosition)
@@ -88,8 +90,8 @@ actual class NaverMapState actual constructor(
             naverMap?.locationSource = value
         }
 
-    // locationTrackingMode가 None이 아닐 때 처음 사용 시 생성되는 factory
-    internal var locationSourceFactory: (() -> LocationSource?)? = null
+    // NaverMapView에서 설정하는 권한 요청 launcher
+    internal var permissionLauncher: ActivityResultLauncher<Array<String>>? = null
 
     private var _lastLocation = mutableStateOf<LatLng?>(null)
     actual val lastLocation: LatLng? get() = _lastLocation.value
@@ -147,9 +149,33 @@ actual class NaverMapState actual constructor(
         }
 
     private fun applyLocationTrackingMode() {
-        if (_locationTrackingMode.value != LocationTrackingMode.None && _locationSource == null) {
-            locationSource = locationSourceFactory?.invoke()
+        // 지도가 아직 준비되지 않았으면 naverMap setter에서 다시 호출됨
+        val map = naverMap ?: return
+
+        if (_locationTrackingMode.value != LocationTrackingMode.None) {
+            val ctx = _context ?: return
+
+            if (!ctx.hasLocationPermission()) {
+                // 권한 없음 → 요청 후 대기 (onPermissionGranted에서 이어서 적용)
+                permissionLauncher?.launch(
+                    arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION,
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                )
+                return
+            }
         }
+
+        map.locationTrackingMode = _locationTrackingMode.value.toNaver()
+    }
+
+    // 권한 허용 후 NaverMapView에서 호출
+    internal fun onPermissionGranted() {
+        naverMap?.locationTrackingMode = _locationTrackingMode.value.toNaver()
+    }
+
+    // 권한 거부 시 NaverMapView에서 호출 → 모드를 None으로 복원
+    internal fun onPermissionDenied() {
+        _locationTrackingMode.value = LocationTrackingMode.None
         naverMap?.locationTrackingMode = _locationTrackingMode.value.toNaver()
     }
 
@@ -182,7 +208,11 @@ actual class NaverMapState actual constructor(
             overlay.circleOutlineColor = _locationOverlayOptions.circleOutlineColor
             
             if (_locationOverlayOptions.isSubIconVisible) {
-                (_locationOverlayOptions.subIcon as? OverlayImage)?.let { overlay.subIcon = it.nativeImage }
+                // 커스텀 subIcon이 없으면 SDK 내장 화살표 아이콘을 기본값으로 사용
+                overlay.subIcon = (_locationOverlayOptions.subIcon as? OverlayImage)?.nativeImage
+                    ?: com.naver.maps.map.overlay.OverlayImage.fromResource(
+                        com.naver.maps.map.R.drawable.navermap_default_location_overlay_sub_icon_arrow
+                    )
             } else {
                 overlay.subIcon = null
             }

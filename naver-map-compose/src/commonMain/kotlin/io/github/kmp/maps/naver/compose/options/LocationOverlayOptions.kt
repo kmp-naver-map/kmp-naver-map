@@ -25,6 +25,7 @@ data class LocationOverlayOptions(
     val isIconPerspectiveEnabled: Boolean = false,
 
     // 정확도 원 설정
+    // ⚠️ 단위 주의: Android = meters(미터), iOS = pt(포인트). 동일한 값이 플랫폼마다 다른 크기로 표시됩니다.
     val circleRadius: Double = 0.0,
     val circleColor: Int = OverlayDefaults.COLOR_TRANSPARENT,
     val circleOutlineWidth: Float = 0f,
