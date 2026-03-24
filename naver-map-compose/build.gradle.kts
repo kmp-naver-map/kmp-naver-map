@@ -61,6 +61,8 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.naver.map.sdk)
             implementation(libs.google.play.services.location)
+            implementation(libs.androidx.activity.compose) // rememberLauncherForActivityResult
+            implementation(libs.androidx.core.ktx)        // ContextCompat.checkSelfPermission
         }
     }
 }

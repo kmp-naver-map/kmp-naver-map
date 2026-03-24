@@ -142,8 +142,9 @@ actual class NaverMapState actual constructor(
         naverMap?.locationOverlay?.let { overlay ->
             overlay.hidden = !_locationOverlayOptions.isVisible
             (_locationOverlayOptions.icon as? OverlayImage)?.let { overlay.icon = it.nativeImage }
-            overlay.iconWidth = _locationOverlayOptions.width.toDouble()
-            overlay.iconHeight = _locationOverlayOptions.height.toDouble()
+            // iOS SDK: NMF_LOCATION_OVERLAY_SIZE_AUTO = 0, Kotlin AUTO = -1f
+            overlay.iconWidth = if (_locationOverlayOptions.width == Marker.MarkerSize.AUTO) 0.0 else _locationOverlayOptions.width.toDouble()
+            overlay.iconHeight = if (_locationOverlayOptions.height == Marker.MarkerSize.AUTO) 0.0 else _locationOverlayOptions.height.toDouble()
             overlay.anchor = CGPointMake(_locationOverlayOptions.anchor.x.toDouble(), _locationOverlayOptions.anchor.y.toDouble())
             overlay.heading = _locationOverlayOptions.bearing.toDouble()
             overlay.globalZIndex = _locationOverlayOptions.globalZIndex.toLong()
@@ -156,8 +157,8 @@ actual class NaverMapState actual constructor(
             } else {
                 overlay.subIcon = null
             }
-            overlay.subIconWidth = _locationOverlayOptions.subIconWidth.toDouble()
-            overlay.subIconHeight = _locationOverlayOptions.subIconHeight.toDouble()
+            overlay.subIconWidth = if (_locationOverlayOptions.subIconWidth == Marker.MarkerSize.AUTO) 0.0 else _locationOverlayOptions.subIconWidth.toDouble()
+            overlay.subIconHeight = if (_locationOverlayOptions.subIconHeight == Marker.MarkerSize.AUTO) 0.0 else _locationOverlayOptions.subIconHeight.toDouble()
             overlay.subAnchor = CGPointMake(_locationOverlayOptions.subIconAnchor.x.toDouble(), _locationOverlayOptions.subIconAnchor.y.toDouble())
         }
     }
@@ -212,10 +213,8 @@ actual class NaverMapState actual constructor(
             }
 
             override fun mapView(mapView: NMFMapView, cameraIsChangingByReason: Long) {
-                // 실시간 카메라 위치 및 영역 동기화
-                _cameraPosition = mapView.cameraPosition.toCommon()
-                _contentRegion.value = mapView.contentRegion.exteriorRing().points()
-                    .filterIsInstance<NMGLatLng>().toCommonBounds()
+                // 매 프레임마다 State 업데이트하면 Compose recomposition이 초당 60회 발생해
+                // UIKitView 렌더링을 방해하므로, 콜백만 전달하고 State는 cameraDidChange에서 갱신
                 onCameraChange?.invoke(cameraIsChangingByReason.toInt(), true)
             }
 
