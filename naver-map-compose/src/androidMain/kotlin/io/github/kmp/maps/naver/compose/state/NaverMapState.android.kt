@@ -154,6 +154,11 @@ actual class NaverMapState actual constructor(
         }
     }
 
+    // 권한 요청 다이얼로그가 표시 중인지 여부
+    // 이 플래그가 true인 동안 addOnOptionChangeListener가 _locationTrackingMode를
+    // None으로 덮어쓰지 않도록 보호한다.
+    private var _awaitingPermission = false
+
     private var _locationTrackingMode = mutableStateOf(LocationTrackingMode.None)
     actual var locationTrackingMode: LocationTrackingMode
         get() = _locationTrackingMode.value
@@ -173,6 +178,7 @@ actual class NaverMapState actual constructor(
 
             if (!ctx.hasLocationPermission()) {
                 // 권한 없음 → 요청 후 대기 (onPermissionGranted에서 이어서 적용)
+                _awaitingPermission = true
                 permissionLauncher?.launch(
                     arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION,
                             android.Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -186,13 +192,15 @@ actual class NaverMapState actual constructor(
 
     // 권한 허용 후 NaverMapView에서 호출
     internal fun onPermissionGranted() {
+        _awaitingPermission = false
         naverMap?.locationTrackingMode = _locationTrackingMode.value.toNaver()
     }
 
     // 권한 거부 시 NaverMapView에서 호출 → 모드를 None으로 복원
     internal fun onPermissionDenied() {
+        _awaitingPermission = false
         _locationTrackingMode.value = LocationTrackingMode.None
-        naverMap?.locationTrackingMode = _locationTrackingMode.value.toNaver()
+        naverMap?.locationTrackingMode = LocationTrackingMode.None.toNaver()
     }
 
     private var _locationOverlayOptions = LocationOverlayOptions()
@@ -308,8 +316,12 @@ actual class NaverMapState actual constructor(
         }
 
         map.addOnOptionChangeListener {
-            val mode = map.locationTrackingMode
-            _locationTrackingMode.value = mode.toCommon()
+            // 권한 요청 다이얼로그가 떠 있는 동안에는 네이티브 지도의 tracking mode(None)가
+            // 상태를 덮어쓰지 않도록 무시한다.
+            if (!_awaitingPermission) {
+                val mode = map.locationTrackingMode
+                _locationTrackingMode.value = mode.toCommon()
+            }
         }
     }
 

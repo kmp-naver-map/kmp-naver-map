@@ -268,6 +268,16 @@ actual class NaverMapState actual constructor(
                     val latLng = LatLng(location.coordinate.useContents { latitude }, location.coordinate.useContents { longitude })
                     _lastLocation.value = latLng
                     onLocationChange?.invoke(latLng)
+
+                    // 권한 허용 직후 SDK가 positionMode를 초기화하는 경우 재적용.
+                    // (처음 위치 수신 시점에 의도한 모드와 실제 모드가 다르면 맞춰준다.)
+                    val map = naverMap
+                    if (map != null && _locationTrackingMode.value != LocationTrackingMode.None) {
+                        val intendedMode = _locationTrackingMode.value.toIos()
+                        if (map.positionMode != intendedMode) {
+                            map.positionMode = intendedMode
+                        }
+                    }
                 }
             }
         }

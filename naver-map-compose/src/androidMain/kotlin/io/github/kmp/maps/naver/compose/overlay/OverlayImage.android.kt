@@ -78,7 +78,7 @@ private fun buildTearDropBitmap(
     val radius = sizePx / 2f
 
     // ── 꼬리 베지어 파라미터 ────────────────────────────────────────────────
-    val alphaDeg = 30f
+    val alphaDeg = 45f
     val alphaRad = Math.toRadians(alphaDeg.toDouble()).toFloat()
     val sinA = sin(alphaRad)
     val cosA = cos(alphaRad)

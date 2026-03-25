@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.overlay.rememberRoundOverlayImageFromUrl
+import io.github.kmp.maps.naver.compose.overlay.tearDropAnchor
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
 import io.github.kmp.maps.naver.compose.model.LocationTrackingMode
@@ -47,7 +48,7 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
         if (eventLogs.size > 15) eventLogs.removeAt(eventLogs.size - 1)
     }
 
-    var trackingMode by remember { mutableStateOf(LocationTrackingMode.Follow) }
+    var trackingMode by remember { mutableStateOf(LocationTrackingMode.None) }
 
     // 네이티브 지도가 트래킹 모드를 변경할 때(드래그 등) UI에 반영.
     // None은 무시: _locationTrackingMode 초기값이 None이어서 첫 실행 시
@@ -116,7 +117,11 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                         position = data.position,
                         icon = icon,
                         width = 60f,
-                        height = 60f,
+                        height = 65f,
+                        anchor = tearDropAnchor(
+                            sizePx = 120, tailHeightPx = 15,
+                            shadowRadiusPx = 10f, shadowDx = 0f, shadowDy = 20f,
+                        ),
                         onClick = { addLog("명소 ${data.id} 클릭"); false }
                     )
                 }
@@ -137,6 +142,10 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                         caption = "푸드트럭 ${data.id}",
                         width = 40f,
                         height = 40f,
+                        anchor = tearDropAnchor(
+                            sizePx = 100, tailHeightPx = 0,
+                            shadowRadiusPx = 10f, shadowDx = 0f, shadowDy = 4f,
+                        ),
                         onClick = { addLog("푸드트럭 ${data.id} 클릭"); false }
                     )
                 }
@@ -208,7 +217,7 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                             Button(
                                 onClick = {
                                     trackingMode = if (trackingMode == LocationTrackingMode.None)
-                                        LocationTrackingMode.Follow else LocationTrackingMode.None
+                                        LocationTrackingMode.NoFollow else LocationTrackingMode.None
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (trackingMode != LocationTrackingMode.None) Color(0xFF3182F6) else Color.DarkGray

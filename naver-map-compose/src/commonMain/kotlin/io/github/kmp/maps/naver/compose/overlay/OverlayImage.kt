@@ -84,6 +84,41 @@ expect suspend fun downloadRoundOverlayImageFromUrl(
 ): OverlayImage?
 
 /**
+ * teardrop 마커의 꼬리 끝이 지도 좌표를 정확히 가리키도록
+ * shadow 패딩을 반영한 [Anchor] 값을 반환합니다.
+ *
+ * [buildTearDropBitmap] / [drawTearDropUIImage] 는 shadow 블러가 잘리지 않도록
+ * 이미지 전체에 `shadowExtra` 여백을 추가합니다. 이 때문에 이미지 하단이
+ * 실제 꼬리 끝보다 `shadowExtra`px 만큼 더 아래에 위치하게 되어,
+ * 기본 Anchor.CenterBottom(0.5, 1.0) 을 사용하면 마커가 좌표보다 위로 올라가 보입니다.
+ *
+ * 이 함수는 꼬리 끝 y좌표 / 전체 이미지 높이로 정확한 anchor y를 계산합니다.
+ *
+ * @param sizePx          원형 영역 픽셀 크기 ([rememberRoundOverlayImageFromUrl]의 sizePx)
+ * @param tailHeightPx    꼬리 높이 ([rememberRoundOverlayImageFromUrl]의 tailHeightPx)
+ * @param shadowRadiusPx  그림자 블러 반경 (0 이면 그림자 없음)
+ * @param shadowDx        그림자 X 오프셋
+ * @param shadowDy        그림자 Y 오프셋
+ */
+fun tearDropAnchor(
+    sizePx: Int,
+    tailHeightPx: Int = 20,
+    shadowRadiusPx: Float = 8f,
+    shadowDx: Float = 0f,
+    shadowDy: Float = 4f,
+): io.github.kmp.maps.naver.compose.model.Anchor {
+    val shadowExtra = if (shadowRadiusPx > 0f)
+        (shadowRadiusPx + kotlin.math.abs(shadowDx) + kotlin.math.abs(shadowDy)).toInt() + 2
+    else 0
+    val totalHeight = sizePx + tailHeightPx + shadowExtra * 2
+    val tipBottomY  = shadowExtra + sizePx + tailHeightPx
+    return io.github.kmp.maps.naver.compose.model.Anchor(
+        x = 0.5f,
+        y = tipBottomY.toFloat() / totalHeight.toFloat(),
+    )
+}
+
+/**
  * 외부 이미지 URL을 흰색 원형 배경 위에 합성하여 마커 아이콘으로 로드합니다.
  *
  * **2단계 렌더링:**
