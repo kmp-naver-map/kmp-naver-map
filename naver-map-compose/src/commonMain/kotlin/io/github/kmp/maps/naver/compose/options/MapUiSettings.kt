@@ -20,6 +20,19 @@ data class MapUiSettings(
     val isIndoorLevelPickerEnabled: Boolean = false,
     val isLocationButtonEnabled: Boolean = false,
     val isLogoClickEnabled: Boolean = true,
+    /**
+     * 로고 위치. 기본값은 [LogoAlign.LeftBottom].
+     * 로고는 반드시 노출되어야 하며 의도적으로 가릴 수 없습니다.
+     */
+    val logoAlign: LogoAlign = LogoAlign.LeftBottom,
+    /** 로고 왼쪽 마진 (dp) */
+    val logoMarginLeft: Int = 0,
+    /** 로고 상단 마진 (dp) */
+    val logoMarginTop: Int = 0,
+    /** 로고 오른쪽 마진 (dp) */
+    val logoMarginRight: Int = 0,
+    /** 로고 하단 마진 (dp) */
+    val logoMarginBottom: Int = 0,
     // 레이어 그룹 설정
     val isBuildingLayerGroupEnabled: Boolean = true,
     val isTransitLayerGroupEnabled: Boolean = false,

@@ -41,8 +41,8 @@ fun App() {
                     })
                 }
                 composable(Screen.Marker.route) {
-                    SampleScaffold(Screen.Marker.title, onBack = { navController.popBackStack() }) {
-                        MarkerDemoScreen()
+                    SampleScaffold(Screen.Marker.title, onBack = { navController.popBackStack() }) { paddingValues ->
+                        MarkerDemoScreen(paddingValues)
                     }
                 }
                 composable(Screen.Path.route) {

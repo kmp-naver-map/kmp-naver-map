@@ -129,6 +129,21 @@ actual class NaverMapState actual constructor(
             settings.isLocationButtonEnabled = _uiSettings.isLocationButtonEnabled
             settings.isLogoClickEnabled = _uiSettings.isLogoClickEnabled
 
+            // 로고 위치 및 마진
+            val logoGravity = when (_uiSettings.logoAlign) {
+                io.github.kmp.maps.naver.compose.options.LogoAlign.LeftBottom  -> android.view.Gravity.BOTTOM or android.view.Gravity.START
+                io.github.kmp.maps.naver.compose.options.LogoAlign.RightBottom -> android.view.Gravity.BOTTOM or android.view.Gravity.END
+                io.github.kmp.maps.naver.compose.options.LogoAlign.LeftTop     -> android.view.Gravity.TOP    or android.view.Gravity.START
+                io.github.kmp.maps.naver.compose.options.LogoAlign.RightTop    -> android.view.Gravity.TOP    or android.view.Gravity.END
+            }
+            settings.setLogoGravity(logoGravity)
+            settings.setLogoMargin(
+                _uiSettings.logoMarginLeft.toFloat().dpToPx().toInt(),
+                _uiSettings.logoMarginTop.toFloat().dpToPx().toInt(),
+                _uiSettings.logoMarginRight.toFloat().dpToPx().toInt(),
+                _uiSettings.logoMarginBottom.toFloat().dpToPx().toInt(),
+            )
+
             map.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BUILDING, _uiSettings.isBuildingLayerGroupEnabled)
             map.setLayerGroupEnabled(NaverMap.LAYER_GROUP_TRANSIT, _uiSettings.isTransitLayerGroupEnabled)
             map.setLayerGroupEnabled(NaverMap.LAYER_GROUP_BICYCLE, _uiSettings.isBicycleLayerGroupEnabled)

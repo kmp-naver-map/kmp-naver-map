@@ -106,6 +106,20 @@ actual class NaverMapState actual constructor(
         container.showIndoorLevelPicker = _uiSettings.isIndoorLevelPickerEnabled
         container.showLocationButton = _uiSettings.isLocationButtonEnabled
         map.logoInteractionEnabled = _uiSettings.isLogoClickEnabled
+
+        // 로고 위치 및 마진
+        map.logoAlign = when (_uiSettings.logoAlign) {
+            io.github.kmp.maps.naver.compose.options.LogoAlign.LeftBottom  -> NMFLogoAlignLeftBottom
+            io.github.kmp.maps.naver.compose.options.LogoAlign.RightBottom -> NMFLogoAlignRightBottom
+            io.github.kmp.maps.naver.compose.options.LogoAlign.LeftTop     -> NMFLogoAlignLeftTop
+            io.github.kmp.maps.naver.compose.options.LogoAlign.RightTop    -> NMFLogoAlignRightTop
+        }
+        map.logoMargin = UIEdgeInsetsMake(
+            _uiSettings.logoMarginTop.dpToPoints(),
+            _uiSettings.logoMarginLeft.dpToPoints(),
+            _uiSettings.logoMarginBottom.dpToPoints(),
+            _uiSettings.logoMarginRight.dpToPoints(),
+        )
         map.setLayerGroup(NMF_LAYER_GROUP_BUILDING, _uiSettings.isBuildingLayerGroupEnabled)
         map.setLayerGroup(NMF_LAYER_GROUP_TRANSIT, _uiSettings.isTransitLayerGroupEnabled)
         map.setLayerGroup(NMF_LAYER_GROUP_BICYCLE, _uiSettings.isBicycleLayerGroupEnabled)

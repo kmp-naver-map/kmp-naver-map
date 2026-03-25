@@ -16,12 +16,14 @@ import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.overlay.rememberRoundOverlayImageFromUrl
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
+import io.github.kmp.maps.naver.compose.options.LogoAlign
+import io.github.kmp.maps.naver.compose.options.MapUiSettings
 import io.github.kmp.maps.naver.compose.state.rememberNaverMapState
 import io.github.kmp.maps.naver.compose.ui.NaverMap
 import kotlin.random.Random
 
 @Composable
-fun MarkerDemoScreen() {
+fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
     val center = LatLng(35.8362304, 129.2831314)
     val mapState = rememberNaverMapState(
         initialPosition = CameraPosition(target = center, zoom = 16.0, bearing = -80.0),
@@ -76,7 +78,11 @@ fun MarkerDemoScreen() {
         // 1. 지도 레이어
         NaverMap(
             modifier = Modifier.fillMaxSize(),
-            state = mapState
+            state = mapState,
+            uiSettings = MapUiSettings(
+                logoAlign = LogoAlign.RightTop,
+                logoMarginTop = paddingValues.calculateTopPadding().value.toInt(),
+            )
         ) {
             if (selectedCategory == "명소") {
                 attractions.forEach { data ->
