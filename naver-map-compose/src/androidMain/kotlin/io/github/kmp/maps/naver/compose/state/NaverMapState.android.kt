@@ -26,6 +26,7 @@ import io.github.kmp.maps.naver.compose.options.ArrowheadPathOptions
 import io.github.kmp.maps.naver.compose.options.CircleOptions
 import io.github.kmp.maps.naver.compose.options.InfoWindowOptions
 import io.github.kmp.maps.naver.compose.options.LocationOverlayOptions
+import io.github.kmp.maps.naver.compose.options.LogoAlign
 import io.github.kmp.maps.naver.compose.options.MapUiSettings
 import io.github.kmp.maps.naver.compose.options.MarkerOptions
 import io.github.kmp.maps.naver.compose.options.PathOptions
@@ -131,10 +132,10 @@ actual class NaverMapState actual constructor(
 
             // 로고 위치 및 마진
             val logoGravity = when (_uiSettings.logoAlign) {
-                io.github.kmp.maps.naver.compose.options.LogoAlign.LeftBottom  -> android.view.Gravity.BOTTOM or android.view.Gravity.START
-                io.github.kmp.maps.naver.compose.options.LogoAlign.RightBottom -> android.view.Gravity.BOTTOM or android.view.Gravity.END
-                io.github.kmp.maps.naver.compose.options.LogoAlign.LeftTop     -> android.view.Gravity.TOP    or android.view.Gravity.START
-                io.github.kmp.maps.naver.compose.options.LogoAlign.RightTop    -> android.view.Gravity.TOP    or android.view.Gravity.END
+                LogoAlign.LeftBottom  -> android.view.Gravity.BOTTOM or android.view.Gravity.START
+                LogoAlign.RightBottom -> android.view.Gravity.BOTTOM or android.view.Gravity.END
+                LogoAlign.LeftTop     -> android.view.Gravity.TOP    or android.view.Gravity.START
+                LogoAlign.RightTop    -> android.view.Gravity.TOP    or android.view.Gravity.END
             }
             settings.setLogoGravity(logoGravity)
             settings.setLogoMargin(
