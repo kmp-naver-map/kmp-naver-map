@@ -46,7 +46,7 @@ actual fun NaverMapView(
         },
         properties = UIKitInteropProperties(
             isInteractive = true,
-            isNativeAccessibilityEnabled = true
+            isNativeAccessibilityEnabled = false
         )
     )
 }

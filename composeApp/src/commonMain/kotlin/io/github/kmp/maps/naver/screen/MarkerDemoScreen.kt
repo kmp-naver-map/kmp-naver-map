@@ -3,32 +3,29 @@ package io.github.kmp.maps.naver.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import composenavermap.composeapp.generated.resources.Res
-import composenavermap.composeapp.generated.resources.ic_marker
-import composenavermap.composeapp.generated.resources.compose_multiplatform
-import composenavermap.composeapp.generated.resources.marker_attraction
-import composenavermap.composeapp.generated.resources.marker_food_truck
+import androidx.compose.ui.zIndex
 import io.github.kmp.maps.naver.compose.model.CameraPosition
+import io.github.kmp.maps.naver.compose.overlay.rememberRoundOverlayImageFromUrl
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
 import io.github.kmp.maps.naver.compose.state.rememberNaverMapState
 import io.github.kmp.maps.naver.compose.ui.NaverMap
+import kotlin.random.Random
 
 @Composable
 fun MarkerDemoScreen() {
     val center = LatLng(35.8362304, 129.2831314)
     val mapState = rememberNaverMapState(
         initialPosition = CameraPosition(target = center, zoom = 16.0, bearing = -80.0),
-
-        )
+    )
 
     LaunchedEffect(mapState.isMapReady) {
         if (mapState.isMapReady) {
@@ -46,53 +43,145 @@ fun MarkerDemoScreen() {
         if (eventLogs.size > 15) eventLogs.removeAt(eventLogs.size - 1)
     }
 
+    // 현재 선택된 카테고리 ("명소" 또는 "푸드트럭")
+    var selectedCategory by remember { mutableStateOf("명소") }
+
+    // 카테고리별 마커 데이터 생성
+    // 각 마커마다 고유한 이미지를 위해 seed 값을 부여함
+    val attractions = remember {
+        List(20) { i ->
+            val lat = center.latitude + (Random.nextDouble() - 0.5) * 0.005
+            val lng = center.longitude + (Random.nextDouble() - 0.5) * 0.005
+            MarkerData(
+                id = i + 1,
+                position = LatLng(lat, lng),
+                imageUrl = "https://picsum.photos/seed/attraction_$i/100"
+            )
+        }
+    }
+
+    val foodTrucks = remember {
+        List(10) { i ->
+            val lat = center.latitude + (Random.nextDouble() - 0.5) * 0.005
+            val lng = center.longitude + (Random.nextDouble() - 0.5) * 0.005
+            MarkerData(
+                id = i + 1,
+                position = LatLng(lat, lng),
+                imageUrl = "https://picsum.photos/seed/food_$i/100"
+            )
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
+        // 1. 지도 레이어
         NaverMap(
             modifier = Modifier.fillMaxSize(),
             state = mapState
         ) {
-            // marker_attraction: center 기준 약간 북서쪽
-            Marker(
-                position = LatLng(35.8370, 129.2800),
-                icon = Res.drawable.marker_attraction,
-                caption = "명소",
-                width = 40f,
-                height = 40f,
-                onClick = { addLog("명소 마커 클릭"); false }
-            )
+            if (selectedCategory == "명소") {
+                attractions.forEach { data ->
+                    val icon = rememberRoundOverlayImageFromUrl(
+                        url = data.imageUrl,
+                        sizePx = 120,
+                        borderWidthPx = 10,
+                        shadowRadiusPx = 10f,
+                        shadowDy = 20f,
+                        tailHeightPx = 15
+                    )
+                    Marker(
+                        position = data.position,
+                        icon = icon,
+                        width = 60f,
+                        height = 60f,
+                        onClick = { addLog("명소 ${data.id} 클릭"); false }
+                    )
+                }
+            }
 
-            // marker_food_truck: center 기준 약간 남동쪽
-            Marker(
-                position = LatLng(35.8355, 129.2850),
-                icon = Res.drawable.marker_food_truck,
-                caption = "푸드트럭",
-                width = 40f,
-                height = 40f,
-                onClick = { addLog("푸드트럭 마커 클릭"); false }
-            )
+            if (selectedCategory == "푸드트럭") {
+                foodTrucks.forEach { data ->
+                    val icon = rememberRoundOverlayImageFromUrl(
+                        url = data.imageUrl,
+                        sizePx = 100,
+                        borderWidthPx = 8,
+                        shadowRadiusPx = 10f,
+                        shadowDy = 4f,
+                    )
+                    Marker(
+                        position = data.position,
+                        icon = icon,
+                        caption = "푸드트럭 ${data.id}",
+                        width = 40f,
+                        height = 40f,
+                        onClick = { addLog("푸드트럭 ${data.id} 클릭"); false }
+                    )
+                }
+            }
         }
 
-        // 로그 및 정보 UI
-        Surface(
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(180.dp),
-            color = Color.Black.copy(alpha = 0.7f)
+        // 2. 하단 컨트롤 레이어 (카테고리 선택 버튼 + 로그 창)
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .zIndex(1f)
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text("Marker Advanced Features Demo", color = Color.Cyan, fontSize = 14.sp)
-                Text(
-                    "현재 줌: ${(mapState.cameraPosition.zoom)}",
-                    color = Color.White, fontSize = 12.sp
-                )
-                HorizontalDivider(
-                    color = Color.DarkGray,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(eventLogs) { log ->
-                        Text("- $log", color = Color.LightGray, fontSize = 11.sp)
+            Surface(
+                modifier = Modifier
+                    .padding(bottom = 12.dp)
+                    .align(Alignment.CenterHorizontally),
+                shape = RoundedCornerShape(30.dp),
+                color = Color.White,
+                shadowElevation = 8.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("명소", "푸드트럭").forEach { category ->
+                        val isSelected = selectedCategory == category
+                        Button(
+                            onClick = { selectedCategory = category },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFF0F0F0),
+                                contentColor = if (isSelected) Color.White else Color.Black
+                            ),
+                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                            shape = RoundedCornerShape(25.dp),
+                            elevation = null
+                        ) {
+                            Text(
+                                text = if (category == "명소") "명소 (20)" else "푸드트럭 (10)",
+                                fontSize = 15.sp,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
+                color = Color.Black.copy(alpha = 0.75f)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("선택된 카테고리: $selectedCategory", color = Color.Yellow, fontSize = 14.sp)
+                    HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 6.dp))
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(eventLogs) { log ->
+                            Text("- $log", color = Color.White, fontSize = 12.sp)
+                        }
                     }
                 }
             }
         }
     }
 }
+
+private data class MarkerData(
+    val id: Int,
+    val position: LatLng,
+    val imageUrl: String
+)
