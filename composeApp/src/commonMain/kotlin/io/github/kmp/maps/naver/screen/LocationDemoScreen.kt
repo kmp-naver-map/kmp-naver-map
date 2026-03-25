@@ -74,7 +74,7 @@ fun LocationDemoScreen() {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    LocationTrackingMode.values().forEach { mode ->
+                    LocationTrackingMode.entries.forEach { mode ->
                         Button(
                             modifier = Modifier.weight(1f),
                             onClick = { trackingMode = mode },

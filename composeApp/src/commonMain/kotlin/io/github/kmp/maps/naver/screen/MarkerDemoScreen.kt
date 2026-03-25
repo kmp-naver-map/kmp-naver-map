@@ -16,6 +16,8 @@ import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.overlay.rememberRoundOverlayImageFromUrl
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
+import io.github.kmp.maps.naver.compose.model.LocationTrackingMode
+import io.github.kmp.maps.naver.compose.options.LocationOverlayOptions
 import io.github.kmp.maps.naver.compose.options.LogoAlign
 import io.github.kmp.maps.naver.compose.options.MapUiSettings
 import io.github.kmp.maps.naver.compose.state.rememberNaverMapState
@@ -45,6 +47,18 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
         if (eventLogs.size > 15) eventLogs.removeAt(eventLogs.size - 1)
     }
 
+    var trackingMode by remember { mutableStateOf(LocationTrackingMode.Follow) }
+
+    // 네이티브 지도가 트래킹 모드를 변경할 때(드래그 등) UI에 반영.
+    // None은 무시: _locationTrackingMode 초기값이 None이어서 첫 실행 시
+    // trackingMode = Follow가 None으로 덮어씌워져 버튼이 깜빡이는 문제 방지.
+    // (사용자가 직접 OFF 누를 때는 onClick에서 trackingMode = None으로 직접 처리됨)
+    LaunchedEffect(mapState.locationTrackingMode) {
+        if (mapState.locationTrackingMode != LocationTrackingMode.None) {
+            trackingMode = mapState.locationTrackingMode
+        }
+    }
+
     // 현재 선택된 카테고리 ("명소" 또는 "푸드트럭")
     var selectedCategory by remember { mutableStateOf("명소") }
 
@@ -54,10 +68,11 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
         List(20) { i ->
             val lat = center.latitude + (Random.nextDouble() - 0.5) * 0.005
             val lng = center.longitude + (Random.nextDouble() - 0.5) * 0.005
+            // 홀수 id(1, 3, 5 ...)는 url null → 흰 마커로 표시
             MarkerData(
                 id = i + 1,
                 position = LatLng(lat, lng),
-                imageUrl = "https://picsum.photos/seed/attraction_$i/100"
+                imageUrl = if ((i + 1) % 2 == 0) "https://picsum.photos/seed/attraction_$i/100" else null
             )
         }
     }
@@ -66,10 +81,11 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
         List(10) { i ->
             val lat = center.latitude + (Random.nextDouble() - 0.5) * 0.005
             val lng = center.longitude + (Random.nextDouble() - 0.5) * 0.005
+            // 짝수 id(2, 4, 6 ...)는 url null → 흰 마커로 표시
             MarkerData(
                 id = i + 1,
                 position = LatLng(lat, lng),
-                imageUrl = "https://picsum.photos/seed/food_$i/100"
+                imageUrl = if ((i + 1) % 2 != 0) "https://picsum.photos/seed/food_$i/100" else null
             )
         }
     }
@@ -82,7 +98,9 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
             uiSettings = MapUiSettings(
                 logoAlign = LogoAlign.RightTop,
                 logoMarginTop = paddingValues.calculateTopPadding().value.toInt(),
-            )
+            ),
+            locationTrackingMode = trackingMode,
+            locationOverlayOptions = LocationOverlayOptions(isVisible = trackingMode != LocationTrackingMode.None)
         ) {
             if (selectedCategory == "명소") {
                 attractions.forEach { data ->
@@ -173,7 +191,38 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                 color = Color.Black.copy(alpha = 0.75f)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("선택된 카테고리: $selectedCategory", color = Color.Yellow, fontSize = 14.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("선택된 카테고리: $selectedCategory", color = Color.Yellow, fontSize = 14.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            mapState.lastLocation?.let {
+                                Text(
+                                    "${(kotlin.math.round(it.latitude * 10000) / 10000.0)}, ${(kotlin.math.round(it.longitude * 10000) / 10000.0)}",
+                                    color = Color.Cyan, fontSize = 10.sp
+                                )
+                                Spacer(Modifier.width(6.dp))
+                            }
+                            Button(
+                                onClick = {
+                                    trackingMode = if (trackingMode == LocationTrackingMode.None)
+                                        LocationTrackingMode.Follow else LocationTrackingMode.None
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (trackingMode != LocationTrackingMode.None) Color(0xFF3182F6) else Color.DarkGray
+                                ),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(20.dp)
+                            ) {
+                                Text(
+                                    if (trackingMode != LocationTrackingMode.None) "위치 ON" else "위치 OFF",
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
                     HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 6.dp))
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(eventLogs) { log ->
@@ -189,5 +238,5 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
 private data class MarkerData(
     val id: Int,
     val position: LatLng,
-    val imageUrl: String
+    val imageUrl: String?
 )

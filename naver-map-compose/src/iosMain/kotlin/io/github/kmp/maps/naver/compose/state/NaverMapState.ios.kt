@@ -142,6 +142,11 @@ actual class NaverMapState actual constructor(
         val map = naverMap ?: return
         val mode = _locationTrackingMode.value.toIos()
         if (map.positionMode != mode) map.positionMode = mode
+        if (_locationTrackingMode.value != LocationTrackingMode.None) {
+            NMFLocationManager.sharedInstance()?.startUpdatingLocation()
+        }
+        // trackingMode 변경 시 overlay 가시성도 함께 동기화
+        applyLocationOverlayOptions()
     }
 
     private var _locationOverlayOptions = LocationOverlayOptions()
@@ -211,7 +216,12 @@ actual class NaverMapState actual constructor(
         map.addOptionDelegate(object : NSObject(), NMFMapViewOptionDelegateProtocol {
             override fun mapViewOptionChanged(mapView: NMFMapView) {
                 val commonMode = mapView.positionMode.toCommon()
-                if (_locationTrackingMode.value != commonMode) _locationTrackingMode.value = commonMode
+                // SDK 초기화 중 positionMode가 잠시 None으로 변경될 수 있음.
+                // None으로의 일시적 변경은 무시하여 overlay 깜빡임 방지.
+                // (사용자가 명시적으로 None 설정 시에는 setter를 통해 직접 처리됨)
+                if (commonMode != LocationTrackingMode.None && _locationTrackingMode.value != commonMode) {
+                    _locationTrackingMode.value = commonMode
+                }
             }
         })
 

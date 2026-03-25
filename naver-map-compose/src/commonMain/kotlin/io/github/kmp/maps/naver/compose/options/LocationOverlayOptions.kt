@@ -13,7 +13,7 @@ import io.github.kmp.maps.naver.compose.overlay.OverlayDefaults
  */
 @Immutable
 data class LocationOverlayOptions(
-    val isVisible: Boolean = false,
+    val isVisible: Boolean = true,
     val icon: Any? = null,
     val width: Float = Marker.MarkerSize.AUTO,
     val height: Float = Marker.MarkerSize.AUTO,

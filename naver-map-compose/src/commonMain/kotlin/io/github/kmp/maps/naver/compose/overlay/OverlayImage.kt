@@ -90,7 +90,7 @@ expect suspend fun downloadRoundOverlayImageFromUrl(
  * 1. 즉시 → 흰색 teardrop placeholder 표시 (기본 파란 마커 없음)
  * 2. URL 로드 완료 → 이미지가 합성된 마커로 교체
  *
- * @param url 이미지 URL
+ * @param url 이미지 URL. null이면 흰색 placeholder만 표시합니다.
  * @param sizePx 원형 영역의 픽셀 크기 (기본 120px)
  * @param borderWidthPx 이미지와 흰 원 사이의 여백 (기본 10px)
  * @param shadowRadiusPx 그림자 블러 반경 (기본 8px, 0 = 그림자 없음)
@@ -101,7 +101,7 @@ expect suspend fun downloadRoundOverlayImageFromUrl(
  */
 @Composable
 fun rememberRoundOverlayImageFromUrl(
-    url: String,
+    url: String?,
     sizePx: Int = 120,
     borderWidthPx: Int = 10,
     shadowRadiusPx: Float = 8f,
@@ -116,11 +116,14 @@ fun rememberRoundOverlayImageFromUrl(
     }
 
     // Phase 2: URL이 바뀌면 placeholder로 초기화 → 비동기로 이미지 로드 후 교체
+    // url이 null이면 placeholder(흰 마커)를 그대로 유지
     var image by remember(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx) {
         mutableStateOf<OverlayImage?>(placeholder)
     }
     LaunchedEffect(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx) {
-        image = downloadRoundOverlayImageFromUrl(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+        if (url != null) {
+            image = downloadRoundOverlayImageFromUrl(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+        }
     }
     return image
 }

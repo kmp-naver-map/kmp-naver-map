@@ -74,10 +74,13 @@ fun NaverMap(
     onMapReady: (INaverMapController) -> Unit = {},
     content: @Composable NaverMapScope.() -> Unit = {}
 ) {
-    // 상태 동기화
-    LaunchedEffect(uiSettings) { state.uiSettings = uiSettings }
+    // uiSettings / locationOverlayOptions 는 composition 중에 미리 반영.
+    // LaunchedEffect 는 비동기(코루틴)라 UIKitView factory 이후에 실행되므로,
+    // factory 시점에 기본값(isVisible=false 등)으로 적용되어 위치 점이 깜빡이는 문제가 있었음.
+    if (state.uiSettings != uiSettings) state.uiSettings = uiSettings
+    if (state.locationOverlayOptions != locationOverlayOptions) state.locationOverlayOptions = locationOverlayOptions
+
     LaunchedEffect(locationTrackingMode) { state.locationTrackingMode = locationTrackingMode }
-    LaunchedEffect(locationOverlayOptions) { state.locationOverlayOptions = locationOverlayOptions }
     LaunchedEffect(isNightModeEnabled) { state.setNightMode(isNightModeEnabled) }
     LaunchedEffect(isIndoorEnabled) { state.setIndoorEnabled(isIndoorEnabled) }
     LaunchedEffect(buildingHeight) { state.setBuildingHeight(buildingHeight) }
