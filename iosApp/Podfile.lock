@@ -1,5 +1,5 @@
 PODS:
-  - naver_map_compose (1.0.8):
+  - naver_map_compose (1.0.9):
     - NMapsMap (= 3.23.1)
   - NMapsGeometry (1.0.2)
   - NMapsMap (3.23.1):
@@ -19,7 +19,7 @@ EXTERNAL SOURCES:
     :path: "../naver-map-compose"
 
 SPEC CHECKSUMS:
-  naver_map_compose: 0488c94db40ddf86776922b6ed18d181e08763ac
+  naver_map_compose: 637537b2a318d4a94b34fd216b8c074da7b1e308
   NMapsGeometry: 4e02554fa9880ef02ed96b075dc84355d6352479
   NMapsMap: b4272a60dcbb8bccb206c632a133cae27a160031
 
