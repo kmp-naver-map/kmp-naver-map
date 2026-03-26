@@ -292,6 +292,17 @@ actual class NaverMapState actual constructor(
 
     private fun setupListeners(map: NaverMap) {
         map.addOnCameraChangeListener { reason, animated ->
+            // 사용자 제스처(드래그/핀치 등)로 카메라가 변경된 경우 Follow/Face → NoFollow 다운그레이드
+            // iOS의 cameraWillChangeByReason == -1L 처리와 동일한 로직
+            // Naver Maps SDK: gesture reason = -1 (NMFMapChangedByGesture와 동일한 값)
+            if (reason == -1 &&
+                (_locationTrackingMode.value == LocationTrackingMode.Follow ||
+                 _locationTrackingMode.value == LocationTrackingMode.Face)
+            ) {
+                _locationTrackingMode.value = LocationTrackingMode.NoFollow
+                map.locationTrackingMode = LocationTrackingMode.NoFollow.toNaver()
+            }
+
             // 카메라 상태 동기화
             _cameraPosition = map.cameraPosition.toCommon()
             _contentRegion.value = map.contentRegion.toCommonBounds()

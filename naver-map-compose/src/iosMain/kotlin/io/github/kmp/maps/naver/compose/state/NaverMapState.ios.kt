@@ -34,7 +34,12 @@ actual class NaverMapState actual constructor(
     // 카메라 위치 실시간 State
     private var _cameraPosition by mutableStateOf(initialPosition)
     actual var cameraPosition: CameraPosition
-        get() = _cameraPosition
+        get() {
+            // _cameraPosition을 읽어 Compose 상태 관찰을 등록하되,
+            // 실제 값은 네이티브 맵에서 직접 읽어 제스처 중에도 최신 값을 반환한다.
+            val statePos = _cameraPosition
+            return naverMap?.cameraPosition?.toCommon() ?: statePos
+        }
         set(value) {
             _cameraPosition = value
             naverMap?.moveCamera(NMFCameraUpdate.cameraUpdateWithPosition(value.toNaver()))
@@ -128,6 +133,10 @@ actual class NaverMapState actual constructor(
         map.setLayerGroup(NMF_LAYER_GROUP_CADASTRAL, _uiSettings.isCadastralLayerGroupEnabled)
     }
 
+    // applyLocationTrackingMode() 호출 후 첫 위치 수신 시 1회만 positionMode를 재동기화하기 위한 플래그.
+    // 모든 위치 업데이트마다 재적용하면 Follow/Face 모드에서 주기적으로 카메라가 이동하는 버그 발생.
+    private var _positionModeSyncNeeded = false
+
     private var _locationTrackingMode = mutableStateOf(LocationTrackingMode.None)
     actual var locationTrackingMode: LocationTrackingMode
         get() = _locationTrackingMode.value
@@ -141,7 +150,14 @@ actual class NaverMapState actual constructor(
     private fun applyLocationTrackingMode() {
         val map = naverMap ?: return
         val mode = _locationTrackingMode.value.toIos()
-        if (map.positionMode != mode) map.positionMode = mode
+        if (map.positionMode != mode) {
+            map.positionMode = mode
+            // 권한 허용 직후 SDK가 positionMode를 초기화할 수 있으므로,
+            // 첫 위치 수신 시 1회 재동기화가 필요하다는 플래그 설정
+            if (_locationTrackingMode.value != LocationTrackingMode.None) {
+                _positionModeSyncNeeded = true
+            }
+        }
         if (_locationTrackingMode.value != LocationTrackingMode.None) {
             NMFLocationManager.sharedInstance()?.startUpdatingLocation()
         }
@@ -231,14 +247,21 @@ actual class NaverMapState actual constructor(
                 if (cameraWillChangeByReason == -1L) {
                     if (_locationTrackingMode.value == LocationTrackingMode.Follow || _locationTrackingMode.value == LocationTrackingMode.Face) {
                         _locationTrackingMode.value = LocationTrackingMode.NoFollow
+                        // 네이티브 positionMode도 함께 변경해야 SDK가 위치 추적을 중단함
+                        // (Kotlin 상태만 바꾸면 setter의 동등 조건으로 applyLocationTrackingMode()가
+                        // 호출되지 않아 네이티브 모드가 Follow/Face 상태로 유지됨)
+                        mapView.positionMode = LocationTrackingMode.NoFollow.toIos()
                     }
                 }
                 onCameraChangeStarted?.invoke(cameraWillChangeByReason.toInt())
             }
 
             override fun mapView(mapView: NMFMapView, cameraIsChangingByReason: Long) {
-                // 매 프레임마다 State 업데이트하면 Compose recomposition이 초당 60회 발생해
-                // UIKitView 렌더링을 방해하므로, 콜백만 전달하고 State는 cameraDidChange에서 갱신
+                // 매 프레임마다 Compose State를 업데이트하면 초당 60회 recomposition이 발생해
+                // UIKitView 렌더링을 방해한다. 따라서 _cameraPosition(Compose State)은
+                // cameraDidChange에서만 갱신하고, 콜백만 전달한다.
+                // cameraPosition getter는 naverMap.cameraPosition에서 직접 읽으므로
+                // 콜백 내에서 cameraPosition을 읽으면 항상 최신 값을 반환한다.
                 onCameraChange?.invoke(cameraIsChangingByReason.toInt(), true)
             }
 
@@ -269,13 +292,16 @@ actual class NaverMapState actual constructor(
                     _lastLocation.value = latLng
                     onLocationChange?.invoke(latLng)
 
-                    // 권한 허용 직후 SDK가 positionMode를 초기화하는 경우 재적용.
-                    // (처음 위치 수신 시점에 의도한 모드와 실제 모드가 다르면 맞춰준다.)
-                    val map = naverMap
-                    if (map != null && _locationTrackingMode.value != LocationTrackingMode.None) {
-                        val intendedMode = _locationTrackingMode.value.toIos()
-                        if (map.positionMode != intendedMode) {
-                            map.positionMode = intendedMode
+                    // 권한 허용 직후 SDK가 positionMode를 초기화하는 경우를 위한 1회성 재동기화.
+                    // 모든 업데이트마다 실행하면 Follow/Face 모드에서 주기적으로 카메라가 이동하는 버그 발생.
+                    if (_positionModeSyncNeeded) {
+                        _positionModeSyncNeeded = false
+                        val map = naverMap
+                        if (map != null && _locationTrackingMode.value != LocationTrackingMode.None) {
+                            val intendedMode = _locationTrackingMode.value.toIos()
+                            if (map.positionMode != intendedMode) {
+                                map.positionMode = intendedMode
+                            }
                         }
                     }
                 }

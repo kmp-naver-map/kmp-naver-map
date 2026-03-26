@@ -70,12 +70,12 @@ class AndroidNaverMapController(
         naverMap.buildingHeight = height
     }
 
-    override fun latLngToScreen(latLng: LatLng): Pair<Float, Float>? {
+    override fun latLngToScreen(latLng: LatLng): Pair<Float, Float> {
         val point = naverMap.projection.toScreenLocation(latLng.toNaver())
         return point.x to point.y
     }
 
-    override fun screenToLatLng(x: Float, y: Float): LatLng? {
+    override fun screenToLatLng(x: Float, y: Float): LatLng {
         val latLng = naverMap.projection.fromScreenLocation(android.graphics.PointF(x, y))
         return latLng.toCommon()
     }

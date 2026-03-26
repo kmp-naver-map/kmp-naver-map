@@ -217,7 +217,7 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                             Button(
                                 onClick = {
                                     trackingMode = if (trackingMode == LocationTrackingMode.None)
-                                        LocationTrackingMode.NoFollow else LocationTrackingMode.None
+                                        LocationTrackingMode.Follow else LocationTrackingMode.None
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (trackingMode != LocationTrackingMode.None) Color(0xFF3182F6) else Color.DarkGray
