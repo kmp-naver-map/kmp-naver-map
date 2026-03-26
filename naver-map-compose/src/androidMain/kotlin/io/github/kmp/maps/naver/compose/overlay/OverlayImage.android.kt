@@ -169,6 +169,8 @@ private fun buildTearDropBitmap(
         canvas.clipPath(clipPath)
         canvas.drawBitmap(scaled, cx - innerRadius, cy - innerRadius, paint)
         canvas.restore()
+        // createScaledBitmap은 크기가 같으면 srcBitmap을 그대로 반환하므로 동일 인스턴스 체크
+        if (scaled !== srcBitmap) scaled.recycle()
     }
 
     return output
@@ -212,35 +214,41 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
     shadowDy: Float,
     shadowColor: Int,
     tailHeightPx: Int,
-): OverlayImage? = withContext(Dispatchers.IO) {
-    try {
-        val srcBitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
-            ?: return@withContext null
-        val bitmap = buildTearDropBitmap(
-            sizePx        = sizePx,
-            shadowRadiusPx = shadowRadiusPx,
-            shadowDx      = shadowDx,
-            shadowDy      = shadowDy,
-            shadowColor   = shadowColor,
-            tailHeightPx  = tailHeightPx,
-            srcBitmap     = srcBitmap,
-            borderWidthPx = borderWidthPx,
-        )
-        OverlayImage(NativeOverlayImage.fromBitmap(bitmap))
-    } catch (e: Exception) {
-        null
+): OverlayImage? {
+    val cacheKey = "round:$url:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx"
+    return OverlayImageCache.getOrLoad(cacheKey) {
+        withContext(Dispatchers.IO) {
+            try {
+                val srcBitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
+                    ?: return@withContext null
+                val bitmap = buildTearDropBitmap(
+                    sizePx         = sizePx,
+                    shadowRadiusPx = shadowRadiusPx,
+                    shadowDx       = shadowDx,
+                    shadowDy       = shadowDy,
+                    shadowColor    = shadowColor,
+                    tailHeightPx   = tailHeightPx,
+                    srcBitmap      = srcBitmap,
+                    borderWidthPx  = borderWidthPx,
+                )
+                srcBitmap.recycle()
+                OverlayImage(NativeOverlayImage.fromBitmap(bitmap))
+            } catch (e: Exception) {
+                null
+            }
+        }
     }
 }
 
 actual suspend fun downloadOverlayImageFromUrl(url: String): OverlayImage? {
-    return withContext(Dispatchers.IO) {
-        try {
-            val bitmap = java.net.URL(url).openStream().use { stream ->
-                BitmapFactory.decodeStream(stream)
+    return OverlayImageCache.getOrLoad("plain:$url") {
+        withContext(Dispatchers.IO) {
+            try {
+                val bitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
+                bitmap?.let { OverlayImage(NativeOverlayImage.fromBitmap(it)) }
+            } catch (e: Exception) {
+                null
             }
-            bitmap?.let { OverlayImage(NativeOverlayImage.fromBitmap(it)) }
-        } catch (e: Exception) {
-            null
         }
     }
 }

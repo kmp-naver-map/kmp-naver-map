@@ -145,9 +145,13 @@ fun rememberRoundOverlayImageFromUrl(
     shadowColor: Int = 0x40000000,
     tailHeightPx: Int = 20,
 ): OverlayImage? {
-    // Phase 1: 흰색 teardrop을 동기적으로 즉시 생성 (스타일이 바뀔 때만 재생성)
+    // Phase 1: 흰색 teardrop을 동기적으로 즉시 생성.
+    // PlaceholderCache를 통해 동일 스타일의 마커들이 같은 인스턴스를 공유합니다.
     val placeholder = remember(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx) {
-        createWhiteRoundOverlayImage(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+        val key = "ph:$sizePx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx"
+        PlaceholderCache.getOrCreate(key) {
+            createWhiteRoundOverlayImage(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+        }
     }
 
     // Phase 2: URL이 바뀌면 placeholder로 초기화 → 비동기로 이미지 로드 후 교체

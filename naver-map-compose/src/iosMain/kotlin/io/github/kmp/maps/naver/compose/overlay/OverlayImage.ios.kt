@@ -247,49 +247,53 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
     shadowColor: Int,
     tailHeightPx: Int,
 ): OverlayImage? {
-    return suspendCancellableCoroutine { continuation ->
-        val nsUrl = NSURL.URLWithString(url)
-            ?: run { continuation.resume(null); return@suspendCancellableCoroutine }
-        val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, _, _ ->
-            if (data == null) {
-                continuation.resume(null); return@dataTaskWithURL
+    val cacheKey = "round:$url:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx"
+    return OverlayImageCache.getOrLoad(cacheKey) {
+        suspendCancellableCoroutine { continuation ->
+            val nsUrl = NSURL.URLWithString(url)
+                ?: run { continuation.resume(null); return@suspendCancellableCoroutine }
+            val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, _, _ ->
+                if (data == null) {
+                    continuation.resume(null); return@dataTaskWithURL
+                }
+                val srcImage = UIImage(data = data)
+                val uiImage = drawTearDropUIImage(
+                    sizePx         = sizePx,
+                    shadowRadiusPx = shadowRadiusPx,
+                    shadowDx       = shadowDx,
+                    shadowDy       = shadowDy,
+                    shadowColor    = shadowColor,
+                    tailHeightPx   = tailHeightPx,
+                    srcImage       = srcImage,
+                    borderWidthPx  = borderWidthPx,
+                )
+                continuation.resume(uiImage?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) })
             }
-            val srcImage = UIImage(data = data)
-            val uiImage = drawTearDropUIImage(
-                sizePx = sizePx,
-                shadowRadiusPx = shadowRadiusPx,
-                shadowDx = shadowDx,
-                shadowDy = shadowDy,
-                shadowColor = shadowColor,
-                tailHeightPx = tailHeightPx,
-                srcImage = srcImage,
-                borderWidthPx = borderWidthPx,
-            )
-            continuation.resume(uiImage?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) })
+            task.resume()
+            continuation.invokeOnCancellation { task.cancel() }
         }
-        task.resume()
-        continuation.invokeOnCancellation { task.cancel() }
     }
 }
 
 actual suspend fun downloadOverlayImageFromUrl(url: String): OverlayImage? {
-    return suspendCancellableCoroutine { continuation ->
-        val nsUrl = NSURL.URLWithString(url)
-        if (nsUrl == null) {
-            continuation.resume(null)
-            return@suspendCancellableCoroutine
-        }
-        val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, _, error ->
-            if (error != null || data == null) {
+    return OverlayImageCache.getOrLoad("plain:$url") {
+        suspendCancellableCoroutine { continuation ->
+            val nsUrl = NSURL.URLWithString(url)
+            if (nsUrl == null) {
                 continuation.resume(null)
-                return@dataTaskWithURL
+                return@suspendCancellableCoroutine
             }
-            val image = UIImage(data = data)
-            val overlayImage = OverlayImage(NMFOverlayImage.overlayImageWithImage(image))
-            continuation.resume(overlayImage)
+            val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, _, error ->
+                if (error != null || data == null) {
+                    continuation.resume(null)
+                    return@dataTaskWithURL
+                }
+                val image = UIImage(data = data)
+                continuation.resume(OverlayImage(NMFOverlayImage.overlayImageWithImage(image)))
+            }
+            task.resume()
+            continuation.invokeOnCancellation { task.cancel() }
         }
-        task.resume()
-        continuation.invokeOnCancellation { task.cancel() }
     }
 }
 
