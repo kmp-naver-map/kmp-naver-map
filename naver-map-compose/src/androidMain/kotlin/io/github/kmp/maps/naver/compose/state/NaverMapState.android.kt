@@ -188,12 +188,14 @@ actual class NaverMapState actual constructor(
         }
 
         map.locationTrackingMode = _locationTrackingMode.value.toNaver()
+        applyLocationOverlayOptions()
     }
 
     // 권한 허용 후 NaverMapView에서 호출
     internal fun onPermissionGranted() {
         _awaitingPermission = false
         naverMap?.locationTrackingMode = _locationTrackingMode.value.toNaver()
+        applyLocationOverlayOptions()
     }
 
     // 권한 거부 시 NaverMapView에서 호출 → 모드를 None으로 복원
@@ -215,7 +217,7 @@ actual class NaverMapState actual constructor(
         naverMap?.locationOverlay?.let { overlay ->
             overlay.isVisible = _locationOverlayOptions.isVisible
             (_locationOverlayOptions.icon as? OverlayImage)?.let { overlay.icon = it.nativeImage }
-            
+
             overlay.iconWidth = if (_locationOverlayOptions.width == Marker.MarkerSize.AUTO)
                 com.naver.maps.map.overlay.Marker.SIZE_AUTO
             else _locationOverlayOptions.width.dpToPx().toInt()
@@ -225,13 +227,16 @@ actual class NaverMapState actual constructor(
             overlay.anchor = PointF(_locationOverlayOptions.anchor.x, _locationOverlayOptions.anchor.y)
             overlay.bearing = _locationOverlayOptions.bearing
             overlay.globalZIndex = _locationOverlayOptions.globalZIndex
-            
+
             overlay.circleRadius = _locationOverlayOptions.circleRadius.toInt()
             overlay.circleColor = _locationOverlayOptions.circleColor
             overlay.circleOutlineWidth = _locationOverlayOptions.circleOutlineWidth.dpToPx().toInt()
             overlay.circleOutlineColor = _locationOverlayOptions.circleOutlineColor
-            
-            if (_locationOverlayOptions.isSubIconVisible) {
+
+            // 화살표(subIcon)는 Follow/Face 모드일 때만 표시 (NoFollow/None에서는 숨김)
+            val isFollowMode = _locationTrackingMode.value == LocationTrackingMode.Follow ||
+                    _locationTrackingMode.value == LocationTrackingMode.Face
+            if (_locationOverlayOptions.isSubIconVisible && isFollowMode) {
                 // 커스텀 subIcon이 없으면 SDK 내장 화살표 아이콘을 기본값으로 사용
                 overlay.subIcon = (_locationOverlayOptions.subIcon as? OverlayImage)?.nativeImage
                     ?: com.naver.maps.map.overlay.OverlayImage.fromResource(
@@ -301,6 +306,7 @@ actual class NaverMapState actual constructor(
             ) {
                 _locationTrackingMode.value = LocationTrackingMode.NoFollow
                 map.locationTrackingMode = LocationTrackingMode.NoFollow.toNaver()
+                applyLocationOverlayOptions()
             }
 
             // 카메라 상태 동기화
