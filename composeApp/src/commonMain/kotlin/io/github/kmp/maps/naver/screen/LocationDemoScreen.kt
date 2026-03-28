@@ -24,11 +24,15 @@ fun LocationDemoScreen() {
         initialPosition = CameraPosition(LatLng(37.5665, 126.9780), 15.0)
     )
 
-    var trackingMode by remember { mutableStateOf(LocationTrackingMode.None) }
+    var trackingMode by remember { mutableStateOf(LocationTrackingMode.NoFollow) }
 
-    // 네이티브 지도가 트래킹 모드를 변경할 때(예: 드래그 → NoFollow) UI에 반영
+    // 네이티브 지도가 트래킹 모드를 변경할 때(예: 드래그 → NoFollow) UI에 반영.
+    // None은 무시: state.locationTrackingMode 초기값이 None이어서 첫 실행 시
+    // trackingMode가 None으로 덮어씌워져 버튼이 깜빡이는 문제 방지.
     LaunchedEffect(state.locationTrackingMode) {
-        trackingMode = state.locationTrackingMode
+        if (state.locationTrackingMode != LocationTrackingMode.None) {
+            trackingMode = state.locationTrackingMode
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

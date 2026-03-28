@@ -21,6 +21,7 @@ import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.*
+import platform.CoreLocation.*
 import platform.UIKit.*
 import platform.darwin.NSObject
 
@@ -80,6 +81,10 @@ actual class NaverMapState actual constructor(
 
     // Strong reference to prevent ARC from releasing the delegate
     private var locationManagerDelegate: NMFLocationManagerDelegateProtocol? = null
+
+    // 위치 권한 변경 감지용 (ARC 해제 방지)
+    private var authObserverManager: CLLocationManager? = null
+    private var authObserverDelegate: CLLocationManagerDelegateProtocol? = null
 
     private val _markers = mutableListOf<Marker>()
     private val _polylines = mutableListOf<PolylineOverlay>()
@@ -160,9 +165,37 @@ actual class NaverMapState actual constructor(
         }
         if (_locationTrackingMode.value != LocationTrackingMode.None) {
             NMFLocationManager.sharedInstance()?.startUpdatingLocation()
+            // 권한이 아직 미결정 상태면 CLLocationManager로 허용 시점을 감지해 재적용
+            val status = CLLocationManager().authorizationStatus
+            if (status == kCLAuthorizationStatusNotDetermined) {
+                startPermissionObserver()
+            }
         }
         // trackingMode 변경 시 overlay 가시성도 함께 동기화
         applyLocationOverlayOptions()
+    }
+
+    private fun startPermissionObserver() {
+        if (authObserverManager != null) return  // 이미 감시 중
+        val manager = CLLocationManager()
+        val delegate = object : NSObject(), CLLocationManagerDelegateProtocol {
+            override fun locationManagerDidChangeAuthorization(manager: CLLocationManager) {
+                val status = manager.authorizationStatus
+                if (status == kCLAuthorizationStatusAuthorizedWhenInUse ||
+                    status == kCLAuthorizationStatusAuthorizedAlways
+                ) {
+                    // 권한 허용 → 옵저버 해제 후 tracking mode 재적용
+                    authObserverManager = null
+                    authObserverDelegate = null
+                    if (_locationTrackingMode.value != LocationTrackingMode.None) {
+                        applyLocationTrackingMode()
+                    }
+                }
+            }
+        }
+        manager.delegate = delegate
+        authObserverDelegate = delegate
+        authObserverManager = manager
     }
 
     private var _locationOverlayOptions = LocationOverlayOptions()
@@ -238,6 +271,12 @@ actual class NaverMapState actual constructor(
                 if (commonMode != LocationTrackingMode.None && _locationTrackingMode.value != commonMode) {
                     _locationTrackingMode.value = commonMode
                 }
+                // 권한 허용 후 SDK가 positionMode를 복원할 때 locationOverlay도 함께 재동기화.
+                // SDK가 positionMode를 None으로 초기화했다가 복원하는 과정에서 overlay가
+                // 숨겨진 채로 방치될 수 있으므로, 활성 모드일 때는 항상 overlay 상태를 재적용.
+                if (commonMode != LocationTrackingMode.None) {
+                    applyLocationOverlayOptions()
+                }
             }
         })
 
@@ -302,6 +341,9 @@ actual class NaverMapState actual constructor(
                             if (map.positionMode != intendedMode) {
                                 map.positionMode = intendedMode
                             }
+                            // SDK가 positionMode 초기화 시 locationOverlay도 숨길 수 있으므로
+                            // 권한 허용 후 첫 위치 수신 시 overlay 가시성도 함께 재동기화
+                            applyLocationOverlayOptions()
                         }
                     }
                 }

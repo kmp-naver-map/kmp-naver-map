@@ -48,7 +48,7 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
         if (eventLogs.size > 15) eventLogs.removeAt(eventLogs.size - 1)
     }
 
-    var trackingMode by remember { mutableStateOf(LocationTrackingMode.None) }
+    var trackingMode by remember { mutableStateOf(LocationTrackingMode.NoFollow) }
 
     // 네이티브 지도가 트래킹 모드를 변경할 때(드래그 등) UI에 반영.
     // None은 무시: _locationTrackingMode 초기값이 None이어서 첫 실행 시
@@ -213,7 +213,7 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                             Button(
                                 onClick = {
                                     trackingMode = if (trackingMode == LocationTrackingMode.None)
-                                        LocationTrackingMode.Follow else LocationTrackingMode.None
+                                        LocationTrackingMode.NoFollow else LocationTrackingMode.None
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = if (trackingMode != LocationTrackingMode.None) Color(0xFF3182F6) else Color.DarkGray
