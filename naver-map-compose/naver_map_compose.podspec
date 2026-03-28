@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'naver_map_compose'
-    spec.version                  = '1.0.10'
+    spec.version                  = '1.0.11'
     spec.homepage                 = 'https://github.com/kmp-naver-map/kmp-naver-map'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
