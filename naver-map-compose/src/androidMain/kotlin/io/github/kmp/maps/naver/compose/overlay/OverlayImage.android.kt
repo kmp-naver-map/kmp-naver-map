@@ -70,7 +70,7 @@ private fun buildTearDropBitmap(
         (shadowRadiusPx + kotlin.math.abs(shadowDx) + kotlin.math.abs(shadowDy)).toInt() + 2
     } else 0
 
-    val totalWidth  = sizePx + shadowExtra * 2
+    val totalWidth  = sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2
     val totalHeight = sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2
 
     val cx     = totalWidth / 2f

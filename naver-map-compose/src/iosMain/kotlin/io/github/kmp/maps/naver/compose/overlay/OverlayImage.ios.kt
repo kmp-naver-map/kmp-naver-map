@@ -94,7 +94,7 @@ private fun drawTearDropUIImage(
         (shadowRadiusPx + kotlin.math.abs(shadowDx) + kotlin.math.abs(shadowDy)).toInt() + 2
     } else 0
 
-    val totalWidth = (sizePx + shadowExtra * 2).toDouble()
+    val totalWidth = (sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2).toDouble()
     val totalHeight = (sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2).toDouble()
 
     val cx = totalWidth / 2.0

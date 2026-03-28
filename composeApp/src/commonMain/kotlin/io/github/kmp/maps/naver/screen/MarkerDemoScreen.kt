@@ -117,11 +117,7 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                         position = data.position,
                         icon = icon,
                         width = 60f,
-                        height = 65f,
-                        anchor = tearDropAnchor(
-                            sizePx = 120, tailHeightPx = 15,
-                            shadowRadiusPx = 10f, shadowDx = 0f, shadowDy = 20f,
-                        ),
+                        height = 85f,
                         onClick = { addLog("명소 ${data.id} 클릭"); false }
                     )
                 }
