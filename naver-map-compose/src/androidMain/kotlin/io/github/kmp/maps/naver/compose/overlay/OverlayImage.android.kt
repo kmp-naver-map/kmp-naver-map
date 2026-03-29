@@ -200,7 +200,8 @@ actual fun createWhiteRoundOverlayImage(
         borderWidthPx = 0,
     )
     OverlayImage(NativeOverlayImage.fromBitmap(bitmap))
-} catch (e: Exception) {
+} catch (e: Throwable) {
+    // OutOfMemoryError(Error)도 포함하여 크래시 방지
     null
 }
 
@@ -233,7 +234,8 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
                 )
                 srcBitmap.recycle()
                 OverlayImage(NativeOverlayImage.fromBitmap(bitmap))
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // OutOfMemoryError(Error)도 포함하여 크래시 방지
                 null
             }
         }
@@ -246,7 +248,8 @@ actual suspend fun downloadOverlayImageFromUrl(url: String): OverlayImage? {
             try {
                 val bitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
                 bitmap?.let { OverlayImage(NativeOverlayImage.fromBitmap(it)) }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // OutOfMemoryError(Error)도 포함하여 크래시 방지
                 null
             }
         }

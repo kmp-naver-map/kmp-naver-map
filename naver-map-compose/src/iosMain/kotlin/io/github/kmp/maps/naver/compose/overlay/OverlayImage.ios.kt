@@ -26,9 +26,13 @@ import platform.CoreGraphics.CGContextSetShadowWithColor
 import platform.CoreGraphics.CGPointMake
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSizeMake
+import platform.Foundation.NSHTTPURLResponse
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLSession
 import platform.Foundation.dataTaskWithURL
+import platform.darwin.DISPATCH_QUEUE_PRIORITY_DEFAULT
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_global_queue
 import platform.UIKit.UIBezierPath
 import platform.UIKit.UIColor
 import platform.UIKit.UIGraphicsBeginImageContextWithOptions
@@ -252,22 +256,32 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
         suspendCancellableCoroutine { continuation ->
             val nsUrl = NSURL.URLWithString(url)
                 ?: run { continuation.resume(null); return@suspendCancellableCoroutine }
-            val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, _, _ ->
-                if (data == null) {
+            val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, response, error ->
+                // NSURLSession.sharedSession 콜백은 직렬(serial) 큐에서 실행됨.
+                // 데이터 검증만 여기서 수행하고, 무거운 비트맵 합성은 즉시 반환하여
+                // 다음 콜백이 블로킹되지 않도록 GCD concurrent 큐로 위임.
+                if (error != null || data == null) {
                     continuation.resume(null); return@dataTaskWithURL
                 }
-                val srcImage = UIImage(data = data)
-                val uiImage = drawTearDropUIImage(
-                    sizePx         = sizePx,
-                    shadowRadiusPx = shadowRadiusPx,
-                    shadowDx       = shadowDx,
-                    shadowDy       = shadowDy,
-                    shadowColor    = shadowColor,
-                    tailHeightPx   = tailHeightPx,
-                    srcImage       = srcImage,
-                    borderWidthPx  = borderWidthPx,
-                )
-                continuation.resume(uiImage?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) })
+                // HTTP 4xx/5xx (Signed URL 만료 등) 감지: Android와 동일하게 null 반환
+                val statusCode = (response as? NSHTTPURLResponse)?.statusCode?.toInt() ?: 200
+                if (statusCode !in 200..299) {
+                    continuation.resume(null); return@dataTaskWithURL
+                }
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)!!) {
+                    val srcImage = UIImage(data = data)
+                    val uiImage = drawTearDropUIImage(
+                        sizePx         = sizePx,
+                        shadowRadiusPx = shadowRadiusPx,
+                        shadowDx       = shadowDx,
+                        shadowDy       = shadowDy,
+                        shadowColor    = shadowColor,
+                        tailHeightPx   = tailHeightPx,
+                        srcImage       = srcImage,
+                        borderWidthPx  = borderWidthPx,
+                    )
+                    continuation.resume(uiImage?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) })
+                }
             }
             task.resume()
             continuation.invokeOnCancellation { task.cancel() }
@@ -283,12 +297,21 @@ actual suspend fun downloadOverlayImageFromUrl(url: String): OverlayImage? {
                 continuation.resume(null)
                 return@suspendCancellableCoroutine
             }
-            val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, _, error ->
+            val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, response, error ->
                 if (error != null || data == null) {
                     continuation.resume(null)
                     return@dataTaskWithURL
                 }
-                val image = UIImage(data = data)
+                // HTTP 4xx/5xx (Signed URL 만료 등) 감지
+                val statusCode = (response as? NSHTTPURLResponse)?.statusCode?.toInt() ?: 200
+                if (statusCode !in 200..299) {
+                    continuation.resume(null)
+                    return@dataTaskWithURL
+                }
+                val image = UIImage(data = data) ?: run {
+                    continuation.resume(null)
+                    return@dataTaskWithURL
+                }
                 continuation.resume(OverlayImage(NMFOverlayImage.overlayImageWithImage(image)))
             }
             task.resume()

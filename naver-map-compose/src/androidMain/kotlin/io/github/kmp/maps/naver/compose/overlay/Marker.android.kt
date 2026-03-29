@@ -187,46 +187,50 @@ actual open class Marker internal constructor(
         nativeMarker.map = null
     }
 
+    private var _lastOptions: MarkerOptions? = null
+
     actual internal fun applyOptions(options: MarkerOptions) {
-        position = options.position
-        (options.icon as? OverlayImage)?.let { icon = it }
-        caption = options.caption
-        subCaption = options.subCaption
-        alpha = options.alpha
-        isVisible = options.isVisible
-        isFlat = options.isFlat
-        isForceShowCaption = options.isForceShowCaption
-        isForceShowIcon = options.isForceShowIcon
-        zIndex = options.zIndex
-        globalZIndex = options.globalZIndex
-        width = options.width
-        height = options.height
-        angle = options.angle
-        anchor = options.anchor
-        minZoom = options.minZoom
-        maxZoom = options.maxZoom
-        isMinZoomInclusive = options.isMinZoomInclusive
-        isMaxZoomInclusive = options.isMaxZoomInclusive
-        captionColor = options.captionColor
-        captionHaloColor = options.captionHaloColor
-        captionTextSize = options.captionTextSize
-        captionMinZoom = options.captionMinZoom
-        captionMaxZoom = options.captionMaxZoom
-        captionRequestedWidth = options.captionRequestedWidth
-        captionOffset = options.captionOffset
-        captionPerspectiveEnabled = options.captionPerspectiveEnabled
-        subCaptionColor = options.subCaptionColor
-        subCaptionHaloColor = options.subCaptionHaloColor
-        subCaptionTextSize = options.subCaptionTextSize
-        subCaptionMinZoom = options.subCaptionMinZoom
-        subCaptionMaxZoom = options.subCaptionMaxZoom
-        subCaptionRequestedWidth = options.subCaptionRequestedWidth
-        isHideCollidedMarkers = options.isHideCollidedMarkers
-        isHideCollidedSymbols = options.isHideCollidedSymbols
-        isHideCollidedCaptions = options.isHideCollidedCaptions
-        isIconPerspectiveEnabled = options.isIconPerspectiveEnabled
-        iconTintColor = options.iconTintColor
+        val prev = _lastOptions
+        if (prev == null || prev.position != options.position) position = options.position
+        if (prev == null || prev.icon != options.icon) (options.icon as? OverlayImage)?.let { icon = it }
+        if (prev == null || prev.caption != options.caption) caption = options.caption
+        if (prev == null || prev.subCaption != options.subCaption) subCaption = options.subCaption
+        if (prev == null || prev.alpha != options.alpha) alpha = options.alpha
+        if (prev == null || prev.isVisible != options.isVisible) isVisible = options.isVisible
+        if (prev == null || prev.isFlat != options.isFlat) isFlat = options.isFlat
+        if (prev == null || prev.isForceShowCaption != options.isForceShowCaption) isForceShowCaption = options.isForceShowCaption
+        if (prev == null || prev.isForceShowIcon != options.isForceShowIcon) isForceShowIcon = options.isForceShowIcon
+        if (prev == null || prev.zIndex != options.zIndex) zIndex = options.zIndex
+        if (prev == null || prev.globalZIndex != options.globalZIndex) globalZIndex = options.globalZIndex
+        if (prev == null || prev.width != options.width) width = options.width
+        if (prev == null || prev.height != options.height) height = options.height
+        if (prev == null || prev.angle != options.angle) angle = options.angle
+        if (prev == null || prev.anchor != options.anchor) anchor = options.anchor
+        if (prev == null || prev.minZoom != options.minZoom) minZoom = options.minZoom
+        if (prev == null || prev.maxZoom != options.maxZoom) maxZoom = options.maxZoom
+        if (prev == null || prev.isMinZoomInclusive != options.isMinZoomInclusive) isMinZoomInclusive = options.isMinZoomInclusive
+        if (prev == null || prev.isMaxZoomInclusive != options.isMaxZoomInclusive) isMaxZoomInclusive = options.isMaxZoomInclusive
+        if (prev == null || prev.captionColor != options.captionColor) captionColor = options.captionColor
+        if (prev == null || prev.captionHaloColor != options.captionHaloColor) captionHaloColor = options.captionHaloColor
+        if (prev == null || prev.captionTextSize != options.captionTextSize) captionTextSize = options.captionTextSize
+        if (prev == null || prev.captionMinZoom != options.captionMinZoom) captionMinZoom = options.captionMinZoom
+        if (prev == null || prev.captionMaxZoom != options.captionMaxZoom) captionMaxZoom = options.captionMaxZoom
+        if (prev == null || prev.captionRequestedWidth != options.captionRequestedWidth) captionRequestedWidth = options.captionRequestedWidth
+        if (prev == null || prev.captionOffset != options.captionOffset) captionOffset = options.captionOffset
+        if (prev == null || prev.captionPerspectiveEnabled != options.captionPerspectiveEnabled) captionPerspectiveEnabled = options.captionPerspectiveEnabled
+        if (prev == null || prev.subCaptionColor != options.subCaptionColor) subCaptionColor = options.subCaptionColor
+        if (prev == null || prev.subCaptionHaloColor != options.subCaptionHaloColor) subCaptionHaloColor = options.subCaptionHaloColor
+        if (prev == null || prev.subCaptionTextSize != options.subCaptionTextSize) subCaptionTextSize = options.subCaptionTextSize
+        if (prev == null || prev.subCaptionMinZoom != options.subCaptionMinZoom) subCaptionMinZoom = options.subCaptionMinZoom
+        if (prev == null || prev.subCaptionMaxZoom != options.subCaptionMaxZoom) subCaptionMaxZoom = options.subCaptionMaxZoom
+        if (prev == null || prev.subCaptionRequestedWidth != options.subCaptionRequestedWidth) subCaptionRequestedWidth = options.subCaptionRequestedWidth
+        if (prev == null || prev.isHideCollidedMarkers != options.isHideCollidedMarkers) isHideCollidedMarkers = options.isHideCollidedMarkers
+        if (prev == null || prev.isHideCollidedSymbols != options.isHideCollidedSymbols) isHideCollidedSymbols = options.isHideCollidedSymbols
+        if (prev == null || prev.isHideCollidedCaptions != options.isHideCollidedCaptions) isHideCollidedCaptions = options.isHideCollidedCaptions
+        if (prev == null || prev.isIconPerspectiveEnabled != options.isIconPerspectiveEnabled) isIconPerspectiveEnabled = options.isIconPerspectiveEnabled
+        if (prev == null || prev.iconTintColor != options.iconTintColor) iconTintColor = options.iconTintColor
         tag = options.tag
+        _lastOptions = options
     }
 
     actual object MarkerSize {

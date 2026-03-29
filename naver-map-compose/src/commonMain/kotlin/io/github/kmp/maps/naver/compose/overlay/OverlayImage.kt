@@ -133,6 +133,7 @@ fun tearDropAnchor(
  * @param shadowDy 그림자 Y 오프셋 (기본 4px, 양수 = 아래 방향)
  * @param shadowColor 그림자 색상 ARGB (기본 0x40000000 = 반투명 검정)
  * @param tailHeightPx 원 아래로 튀어나오는 꼬리 높이 (기본 20px, 0 = 꼬리 없음)
+ * @param onError 이미지 로드 실패 시 호출되는 콜백. Signed URL 만료 시 URL 갱신 용도로 활용 가능.
  */
 @Composable
 fun rememberRoundOverlayImageFromUrl(
@@ -144,6 +145,7 @@ fun rememberRoundOverlayImageFromUrl(
     shadowDy: Float = 4f,
     shadowColor: Int = 0x40000000,
     tailHeightPx: Int = 20,
+    onError: (() -> Unit)? = null,
 ): OverlayImage? {
     // Phase 1: 흰색 teardrop을 동기적으로 즉시 생성.
     // PlaceholderCache를 통해 동일 스타일의 마커들이 같은 인스턴스를 공유합니다.
@@ -161,7 +163,14 @@ fun rememberRoundOverlayImageFromUrl(
     }
     LaunchedEffect(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx) {
         if (url != null) {
-            image = downloadRoundOverlayImageFromUrl(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+            val result = downloadRoundOverlayImageFromUrl(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+            if (result != null) {
+                image = result
+            } else {
+                // 실패 시 placeholder 유지 (null 할당 방지) 후 콜백 전달
+                // Signed URL 만료 등 네트워크 오류 시 URL 갱신 기회 제공
+                onError?.invoke()
+            }
         }
     }
     return image

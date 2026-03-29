@@ -1,8 +1,11 @@
 package io.github.kmp.maps.naver.compose.overlay
 
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 
 /**
  * URL 기반 OverlayImage 전용 LRU 캐시.
@@ -13,6 +16,14 @@ import kotlinx.coroutines.sync.withLock
 internal object OverlayImageCache {
 
     private const val MAX_SIZE = 50
+
+    /**
+     * 동시 다운로드 수 상한. 카테고리 전환 시 수십 개 마커가 한꺼번에 요청해도
+     * IO 스레드·메모리 사용이 한꺼번에 폭발하지 않도록 제어합니다.
+     * 캐시 히트·in-flight 대기는 permit을 소모하지 않습니다.
+     */
+    private const val MAX_CONCURRENT_DOWNLOADS = 4
+    private val downloadSemaphore = Semaphore(MAX_CONCURRENT_DOWNLOADS)
 
     // 접근 순서 기반 LRU: 조회 시 키를 삭제 후 재삽입
     private val map = LinkedHashMap<String, OverlayImage>()
@@ -46,9 +57,13 @@ internal object OverlayImageCache {
             return existingDeferred.await()
         }
 
-        // 이 코루틴이 실제 로딩 담당
+        // 이 코루틴이 실제 로딩 담당 (Semaphore로 동시 다운로드 수 제한)
         val result = try {
-            loader()
+            downloadSemaphore.withPermit { loader() }
+        } catch (e: CancellationException) {
+            // 구조적 동시성 유지: in-flight 정리 후 취소 재전파
+            mutex.withLock { inFlight.remove(key)?.complete(null) }
+            throw e
         } catch (e: Exception) {
             null
         }
