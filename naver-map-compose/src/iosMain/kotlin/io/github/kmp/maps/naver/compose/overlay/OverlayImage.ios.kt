@@ -308,7 +308,7 @@ actual suspend fun downloadOverlayImageFromUrl(url: String): OverlayImage? {
                     continuation.resume(null)
                     return@dataTaskWithURL
                 }
-                val image = UIImage(data = data) ?: run {
+                val image = UIImage.imageWithData(data) ?: run {
                     continuation.resume(null)
                     return@dataTaskWithURL
                 }
