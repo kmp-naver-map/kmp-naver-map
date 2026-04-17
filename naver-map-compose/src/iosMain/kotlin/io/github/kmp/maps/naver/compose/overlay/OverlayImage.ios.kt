@@ -90,6 +90,7 @@ private fun drawTearDropUIImage(
     tailHeightPx: Int,
     srcImage: UIImage?,
     borderWidthPx: Int,
+    backgroundColor: Int,
 ): UIImage? {
     val hasShadow = shadowRadiusPx > 0f
     val hasTail = tailHeightPx > 0
@@ -194,7 +195,11 @@ private fun drawTearDropUIImage(
         )
     }
     CGContextBeginTransparencyLayer(context, null)
-    UIColor.whiteColor.setFill()
+    val bgA = ((backgroundColor ushr 24) and 0xFF) / 255.0
+    val bgR = ((backgroundColor ushr 16) and 0xFF) / 255.0
+    val bgG = ((backgroundColor ushr 8) and 0xFF) / 255.0
+    val bgB = (backgroundColor and 0xFF) / 255.0
+    UIColor(red = bgR, green = bgG, blue = bgB, alpha = bgA).setFill()
     buildBezierPath().fill()
     CGContextEndTransparencyLayer(context)
     CGContextRestoreGState(context)
@@ -218,7 +223,7 @@ private fun drawTearDropUIImage(
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** URL 이미지 없이 흰색 teardrop 만 즉시(동기) 생성 → placeholder 용 */
+/** URL 이미지 없이 teardrop 만 즉시(동기) 생성 → placeholder 용 */
 actual fun createWhiteRoundOverlayImage(
     sizePx: Int,
     shadowRadiusPx: Float,
@@ -226,16 +231,18 @@ actual fun createWhiteRoundOverlayImage(
     shadowDy: Float,
     shadowColor: Int,
     tailHeightPx: Int,
+    backgroundColor: Int,
 ): OverlayImage? {
     val uiImage = drawTearDropUIImage(
-        sizePx = sizePx,
-        shadowRadiusPx = shadowRadiusPx,
-        shadowDx = shadowDx,
-        shadowDy = shadowDy,
-        shadowColor = shadowColor,
-        tailHeightPx = tailHeightPx,
-        srcImage = null,
-        borderWidthPx = 0,
+        sizePx          = sizePx,
+        shadowRadiusPx  = shadowRadiusPx,
+        shadowDx        = shadowDx,
+        shadowDy        = shadowDy,
+        shadowColor     = shadowColor,
+        tailHeightPx    = tailHeightPx,
+        srcImage        = null,
+        borderWidthPx   = 0,
+        backgroundColor = backgroundColor,
     ) ?: return null
     return OverlayImage(NMFOverlayImage.overlayImageWithImage(uiImage))
 }
@@ -250,8 +257,9 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
     shadowDy: Float,
     shadowColor: Int,
     tailHeightPx: Int,
+    backgroundColor: Int,
 ): OverlayImage? {
-    val cacheKey = "round:$url:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx"
+    val cacheKey = "round:$url:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx:$backgroundColor"
     return OverlayImageCache.getOrLoad(cacheKey) {
         suspendCancellableCoroutine { continuation ->
             val nsUrl = NSURL.URLWithString(url)
@@ -271,14 +279,15 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)!!) {
                     val srcImage = UIImage(data = data)
                     val uiImage = drawTearDropUIImage(
-                        sizePx         = sizePx,
-                        shadowRadiusPx = shadowRadiusPx,
-                        shadowDx       = shadowDx,
-                        shadowDy       = shadowDy,
-                        shadowColor    = shadowColor,
-                        tailHeightPx   = tailHeightPx,
-                        srcImage       = srcImage,
-                        borderWidthPx  = borderWidthPx,
+                        sizePx          = sizePx,
+                        shadowRadiusPx  = shadowRadiusPx,
+                        shadowDx        = shadowDx,
+                        shadowDy        = shadowDy,
+                        shadowColor     = shadowColor,
+                        tailHeightPx    = tailHeightPx,
+                        srcImage        = srcImage,
+                        borderWidthPx   = borderWidthPx,
+                        backgroundColor = backgroundColor,
                     )
                     continuation.resume(uiImage?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) })
                 }

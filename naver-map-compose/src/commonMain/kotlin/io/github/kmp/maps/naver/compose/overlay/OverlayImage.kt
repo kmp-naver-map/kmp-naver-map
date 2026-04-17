@@ -57,7 +57,7 @@ fun rememberOverlayImageFromUrl(url: String): OverlayImage? {
 }
 
 /**
- * URL 이미지 없이 흰색 teardrop 형태만 동기적으로 그려 [OverlayImage]를 반환합니다.
+ * URL 이미지 없이 teardrop 형태만 동기적으로 그려 [OverlayImage]를 반환합니다.
  * URL 로딩 전 placeholder로 즉시 표시하기 위해 사용됩니다.
  */
 expect fun createWhiteRoundOverlayImage(
@@ -67,10 +67,11 @@ expect fun createWhiteRoundOverlayImage(
     shadowDy: Float,
     shadowColor: Int,
     tailHeightPx: Int,
+    backgroundColor: Int,
 ): OverlayImage?
 
 /**
- * 외부 URL 이미지를 흰색 원형(+ 선택적 꼬리) 배경 안에 합성하여 [OverlayImage]를 반환하는 플랫폼별 suspend 함수입니다.
+ * 외부 URL 이미지를 원형(+ 선택적 꼬리) 배경 안에 합성하여 [OverlayImage]를 반환하는 플랫폼별 suspend 함수입니다.
  */
 expect suspend fun downloadRoundOverlayImageFromUrl(
     url: String,
@@ -81,6 +82,7 @@ expect suspend fun downloadRoundOverlayImageFromUrl(
     shadowDy: Float,
     shadowColor: Int,
     tailHeightPx: Int,
+    backgroundColor: Int,
 ): OverlayImage?
 
 /**
@@ -119,20 +121,21 @@ fun tearDropAnchor(
 }
 
 /**
- * 외부 이미지 URL을 흰색 원형 배경 위에 합성하여 마커 아이콘으로 로드합니다.
+ * 외부 이미지 URL을 원형 배경 위에 합성하여 마커 아이콘으로 로드합니다.
  *
  * **2단계 렌더링:**
- * 1. 즉시 → 흰색 teardrop placeholder 표시 (기본 파란 마커 없음)
+ * 1. 즉시 → teardrop placeholder 표시 (기본 파란 마커 없음)
  * 2. URL 로드 완료 → 이미지가 합성된 마커로 교체
  *
- * @param url 이미지 URL. null이면 흰색 placeholder만 표시합니다.
+ * @param url 이미지 URL. null이면 placeholder만 표시합니다.
  * @param sizePx 원형 영역의 픽셀 크기 (기본 120px)
- * @param borderWidthPx 이미지와 흰 원 사이의 여백 (기본 10px)
+ * @param borderWidthPx 이미지와 원 테두리 사이의 여백 (기본 10px)
  * @param shadowRadiusPx 그림자 블러 반경 (기본 8px, 0 = 그림자 없음)
  * @param shadowDx 그림자 X 오프셋 (기본 0px)
  * @param shadowDy 그림자 Y 오프셋 (기본 4px, 양수 = 아래 방향)
  * @param shadowColor 그림자 색상 ARGB (기본 0x40000000 = 반투명 검정)
  * @param tailHeightPx 원 아래로 튀어나오는 꼬리 높이 (기본 20px, 0 = 꼬리 없음)
+ * @param backgroundColor teardrop 배경 색상 ARGB (기본 0xFFFFFFFF = 흰색)
  * @param onError 이미지 로드 실패 시 호출되는 콜백. Signed URL 만료 시 URL 갱신 용도로 활용 가능.
  */
 @Composable
@@ -145,25 +148,26 @@ fun rememberRoundOverlayImageFromUrl(
     shadowDy: Float = 4f,
     shadowColor: Int = 0x40000000,
     tailHeightPx: Int = 20,
+    backgroundColor: Int = 0xFFFFFFFF.toInt(),
     onError: (() -> Unit)? = null,
 ): OverlayImage? {
-    // Phase 1: 흰색 teardrop을 동기적으로 즉시 생성.
+    // Phase 1: teardrop을 동기적으로 즉시 생성.
     // PlaceholderCache를 통해 동일 스타일의 마커들이 같은 인스턴스를 공유합니다.
-    val placeholder = remember(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx) {
-        val key = "ph:$sizePx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx"
+    val placeholder = remember(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
+        val key = "ph:$sizePx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx:$backgroundColor"
         PlaceholderCache.getOrCreate(key) {
-            createWhiteRoundOverlayImage(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+            createWhiteRoundOverlayImage(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor)
         }
     }
 
     // Phase 2: URL이 바뀌면 placeholder로 초기화 → 비동기로 이미지 로드 후 교체
-    // url이 null이면 placeholder(흰 마커)를 그대로 유지
-    var image by remember(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx) {
+    // url이 null이면 placeholder를 그대로 유지
+    var image by remember(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
         mutableStateOf<OverlayImage?>(placeholder)
     }
-    LaunchedEffect(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx) {
+    LaunchedEffect(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
         if (url != null) {
-            val result = downloadRoundOverlayImageFromUrl(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx)
+            val result = downloadRoundOverlayImageFromUrl(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor)
             if (result != null) {
                 image = result
             } else {

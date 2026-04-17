@@ -111,7 +111,8 @@ fun MarkerDemoScreen(paddingValues: PaddingValues = PaddingValues()) {
                         borderWidthPx = 10,
                         shadowRadiusPx = 10f,
                         shadowDy = 20f,
-                        tailHeightPx = 15
+                        tailHeightPx = 15,
+                        backgroundColor = 0xFFFF5252.toInt()
                     )
                     Marker(
                         position = data.position,

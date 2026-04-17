@@ -62,6 +62,7 @@ private fun buildTearDropBitmap(
     tailHeightPx: Int,
     srcBitmap: android.graphics.Bitmap?,
     borderWidthPx: Int,
+    backgroundColor: Int,
 ): android.graphics.Bitmap {
     val hasShadow = shadowRadiusPx > 0f
     val hasTail   = tailHeightPx > 0
@@ -153,8 +154,8 @@ private fun buildTearDropBitmap(
         paint.maskFilter = null
     }
 
-    // 2) 흰색 teardrop
-    paint.color = android.graphics.Color.WHITE
+    // 2) teardrop 배경
+    paint.color = backgroundColor
     canvas.drawPath(buildPath(), paint)
 
     // 3) 원 안에 이미지 합성 (srcBitmap 이 있을 때만)
@@ -180,7 +181,7 @@ private fun buildTearDropBitmap(
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** URL 이미지 없이 흰색 teardrop 만 즉시(동기) 생성 → placeholder 용 */
+/** URL 이미지 없이 teardrop 만 즉시(동기) 생성 → placeholder 용 */
 actual fun createWhiteRoundOverlayImage(
     sizePx: Int,
     shadowRadiusPx: Float,
@@ -188,16 +189,18 @@ actual fun createWhiteRoundOverlayImage(
     shadowDy: Float,
     shadowColor: Int,
     tailHeightPx: Int,
+    backgroundColor: Int,
 ): OverlayImage? = try {
     val bitmap = buildTearDropBitmap(
-        sizePx        = sizePx,
-        shadowRadiusPx = shadowRadiusPx,
-        shadowDx      = shadowDx,
-        shadowDy      = shadowDy,
-        shadowColor   = shadowColor,
-        tailHeightPx  = tailHeightPx,
-        srcBitmap     = null,
-        borderWidthPx = 0,
+        sizePx          = sizePx,
+        shadowRadiusPx  = shadowRadiusPx,
+        shadowDx        = shadowDx,
+        shadowDy        = shadowDy,
+        shadowColor     = shadowColor,
+        tailHeightPx    = tailHeightPx,
+        srcBitmap       = null,
+        borderWidthPx   = 0,
+        backgroundColor = backgroundColor,
     )
     OverlayImage(NativeOverlayImage.fromBitmap(bitmap))
 } catch (e: Throwable) {
@@ -215,22 +218,24 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
     shadowDy: Float,
     shadowColor: Int,
     tailHeightPx: Int,
+    backgroundColor: Int,
 ): OverlayImage? {
-    val cacheKey = "round:$url:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx"
+    val cacheKey = "round:$url:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx:$backgroundColor"
     return OverlayImageCache.getOrLoad(cacheKey) {
         withContext(Dispatchers.IO) {
             try {
                 val srcBitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
                     ?: return@withContext null
                 val bitmap = buildTearDropBitmap(
-                    sizePx         = sizePx,
-                    shadowRadiusPx = shadowRadiusPx,
-                    shadowDx       = shadowDx,
-                    shadowDy       = shadowDy,
-                    shadowColor    = shadowColor,
-                    tailHeightPx   = tailHeightPx,
-                    srcBitmap      = srcBitmap,
-                    borderWidthPx  = borderWidthPx,
+                    sizePx          = sizePx,
+                    shadowRadiusPx  = shadowRadiusPx,
+                    shadowDx        = shadowDx,
+                    shadowDy        = shadowDy,
+                    shadowColor     = shadowColor,
+                    tailHeightPx    = tailHeightPx,
+                    srcBitmap       = srcBitmap,
+                    borderWidthPx   = borderWidthPx,
+                    backgroundColor = backgroundColor,
                 )
                 srcBitmap.recycle()
                 OverlayImage(NativeOverlayImage.fromBitmap(bitmap))
