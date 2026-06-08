@@ -197,6 +197,31 @@ actual class NaverMapState actual constructor(
         authObserverManager = manager
     }
 
+    /**
+     * 앱이 백그라운드에서 포그라운드로 복귀했을 때 호출됩니다.
+     *
+     * iOS는 포그라운드 전용(When-In-Use) 앱의 위치 업데이트를 백그라운드 동안 중단하고
+     * 복귀 시 자동 재개를 보장하지 않습니다. 추적 모드가 활성 상태면 위치 업데이트를
+     * 다시 요청해 위치 오버레이(현재 위치 점)가 복귀 후의 실제 위치로 갱신되도록 합니다.
+     */
+    internal fun onEnterForeground() {
+        if (_locationTrackingMode.value != LocationTrackingMode.None) {
+            applyLocationTrackingMode()
+        }
+    }
+
+    /**
+     * 앱이 포그라운드에서 백그라운드로 전환될 때 호출됩니다.
+     *
+     * 추적 모드가 활성 상태면 위치 업데이트를 명시적으로 중단해 백그라운드 배터리 소모를 줄입니다.
+     * 복귀 시 [onEnterForeground]에서 다시 시작합니다.
+     */
+    internal fun onEnterBackground() {
+        if (_locationTrackingMode.value != LocationTrackingMode.None) {
+            NMFLocationManager.sharedInstance()?.stopUpdatingLocation()
+        }
+    }
+
     private var _locationOverlayOptions = LocationOverlayOptions()
     actual var locationOverlayOptions: LocationOverlayOptions
         get() = _locationOverlayOptions
