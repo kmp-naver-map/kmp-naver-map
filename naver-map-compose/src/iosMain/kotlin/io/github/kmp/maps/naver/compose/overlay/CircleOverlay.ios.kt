@@ -65,15 +65,19 @@ actual class CircleOverlay internal constructor(
         }
     }
 
+    private var _lastOptions: CircleOptions? = null
+
     actual internal fun applyOptions(options: CircleOptions) {
-        center = options.center
-        radius = options.radius
-        fillColor = options.fillColor
-        outlineColor = options.outlineColor
-        outlineWidth = options.outlineWidth
-        zIndex = options.zIndex
-        isVisible = options.isVisible
+        val prev = _lastOptions
+        if (prev == null || prev.center != options.center) center = options.center
+        if (prev == null || prev.radius != options.radius) radius = options.radius
+        if (prev == null || prev.fillColor != options.fillColor) fillColor = options.fillColor
+        if (prev == null || prev.outlineColor != options.outlineColor) outlineColor = options.outlineColor
+        if (prev == null || prev.outlineWidth != options.outlineWidth) outlineWidth = options.outlineWidth
+        if (prev == null || prev.zIndex != options.zIndex) zIndex = options.zIndex
+        if (prev == null || prev.isVisible != options.isVisible) isVisible = options.isVisible
         tag = options.tag
+        _lastOptions = options
     }
 
     actual fun remove() {

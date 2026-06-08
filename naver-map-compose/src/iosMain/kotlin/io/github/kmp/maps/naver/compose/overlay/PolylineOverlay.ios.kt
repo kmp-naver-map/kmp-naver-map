@@ -67,16 +67,22 @@ actual open class PolylineOverlay(internal val nativePolyline: NMFPolylineOverla
         }
     }
 
+    private var _lastOptions: PolylineOptions? = null
+
     actual internal fun applyOptions(options: PolylineOptions) {
-        coords = options.coords
-        color = options.color
-        width = options.width
-        if (options.pattern.isNotEmpty()) pattern = options.pattern
-        capType = options.capType
-        joinType = options.joinType
-        zIndex = options.zIndex
-        isVisible = options.isVisible
+        val prev = _lastOptions
+        if (prev == null || prev.coords != options.coords) coords = options.coords
+        if (prev == null || prev.color != options.color) color = options.color
+        if (prev == null || prev.width != options.width) width = options.width
+        if (prev == null || prev.pattern != options.pattern) {
+            if (options.pattern.isNotEmpty()) pattern = options.pattern
+        }
+        if (prev == null || prev.capType != options.capType) capType = options.capType
+        if (prev == null || prev.joinType != options.joinType) joinType = options.joinType
+        if (prev == null || prev.zIndex != options.zIndex) zIndex = options.zIndex
+        if (prev == null || prev.isVisible != options.isVisible) isVisible = options.isVisible
         tag = options.tag
+        _lastOptions = options
     }
 
     actual fun remove() {

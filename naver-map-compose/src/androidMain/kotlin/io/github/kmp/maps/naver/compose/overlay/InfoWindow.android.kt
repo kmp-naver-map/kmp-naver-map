@@ -61,20 +61,26 @@ actual open class InfoWindow(internal val nativeInfoWindow: NaverInfoWindow) {
         }
     }
 
+    private var _lastOptions: InfoWindowOptions? = null
+
     actual internal fun applyOptions(options: InfoWindowOptions) {
-        position = options.position
-        text = options.text
-        alpha = options.alpha
-        zIndex = options.zIndex
-        anchor = options.anchor
-        offsetX = options.offsetX
-        offsetY = options.offsetY
-        textColor = options.textColor
-        textSize = options.textSize
-        backgroundColor = options.backgroundColor
-        cornerRadiusDp = options.cornerRadiusDp
-        isVisible = options.isVisible
+        val prev = _lastOptions
+        // text/color/size 등의 setter는 매번 invalidate()로 뷰를 다시 그리므로,
+        // 변경된 속성만 적용해 불필요한 재렌더를 막는다.
+        if (prev == null || prev.position != options.position) position = options.position
+        if (prev == null || prev.text != options.text) text = options.text
+        if (prev == null || prev.alpha != options.alpha) alpha = options.alpha
+        if (prev == null || prev.zIndex != options.zIndex) zIndex = options.zIndex
+        if (prev == null || prev.anchor != options.anchor) anchor = options.anchor
+        if (prev == null || prev.offsetX != options.offsetX) offsetX = options.offsetX
+        if (prev == null || prev.offsetY != options.offsetY) offsetY = options.offsetY
+        if (prev == null || prev.textColor != options.textColor) textColor = options.textColor
+        if (prev == null || prev.textSize != options.textSize) textSize = options.textSize
+        if (prev == null || prev.backgroundColor != options.backgroundColor) backgroundColor = options.backgroundColor
+        if (prev == null || prev.cornerRadiusDp != options.cornerRadiusDp) cornerRadiusDp = options.cornerRadiusDp
+        if (prev == null || prev.isVisible != options.isVisible) isVisible = options.isVisible
         tag = options.tag
+        _lastOptions = options
     }
 
     actual fun close() {

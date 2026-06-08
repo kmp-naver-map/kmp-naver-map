@@ -47,15 +47,19 @@ actual open class PolygonOverlay internal constructor(
         }
     }
 
+    private var _lastOptions: PolygonOptions? = null
+
     actual internal fun applyOptions(options: PolygonOptions) {
-        coords = options.coords
-        holes = options.holes
-        fillColor = options.fillColor
-        outlineColor = options.outlineColor
-        outlineWidth = options.outlineWidth
-        zIndex = options.zIndex
-        isVisible = options.isVisible
+        val prev = _lastOptions
+        if (prev == null || prev.coords != options.coords) coords = options.coords
+        if (prev == null || prev.holes != options.holes) holes = options.holes
+        if (prev == null || prev.fillColor != options.fillColor) fillColor = options.fillColor
+        if (prev == null || prev.outlineColor != options.outlineColor) outlineColor = options.outlineColor
+        if (prev == null || prev.outlineWidth != options.outlineWidth) outlineWidth = options.outlineWidth
+        if (prev == null || prev.zIndex != options.zIndex) zIndex = options.zIndex
+        if (prev == null || prev.isVisible != options.isVisible) isVisible = options.isVisible
         tag = options.tag
+        _lastOptions = options
     }
 
     actual fun remove() {

@@ -111,22 +111,28 @@ actual class PathOverlay(
         onClickListener = listener
     }
 
+    private var _lastOptions: PathOptions? = null
+
     actual internal fun applyOptions(options: PathOptions) {
-        coords = options.coords
-        width = options.width
-        outlineWidth = options.outlineWidth
-        color = options.color
-        outlineColor = options.outlineColor
-        passedColor = options.passedColor
-        passedOutlineColor = options.passedOutlineColor
-        progress = options.progress
-        patternInterval = options.patternInterval
-        isHideCollidedSymbols = options.isHideCollidedSymbols
-        isHideCollidedMarkers = options.isHideCollidedMarkers
-        isHideCollidedCaptions = options.isHideCollidedCaptions
-        zIndex = options.zIndex
-        isVisible = options.isVisible
+        val prev = _lastOptions
+        // coords 재매핑은 네이티브 지오메트리를 재구성하므로 가장 비싼 작업.
+        // progress 등 일부 속성만 바뀔 때 좌표 재매핑을 건너뛰어 성능을 보호한다.
+        if (prev == null || prev.coords != options.coords) coords = options.coords
+        if (prev == null || prev.width != options.width) width = options.width
+        if (prev == null || prev.outlineWidth != options.outlineWidth) outlineWidth = options.outlineWidth
+        if (prev == null || prev.color != options.color) color = options.color
+        if (prev == null || prev.outlineColor != options.outlineColor) outlineColor = options.outlineColor
+        if (prev == null || prev.passedColor != options.passedColor) passedColor = options.passedColor
+        if (prev == null || prev.passedOutlineColor != options.passedOutlineColor) passedOutlineColor = options.passedOutlineColor
+        if (prev == null || prev.progress != options.progress) progress = options.progress
+        if (prev == null || prev.patternInterval != options.patternInterval) patternInterval = options.patternInterval
+        if (prev == null || prev.isHideCollidedSymbols != options.isHideCollidedSymbols) isHideCollidedSymbols = options.isHideCollidedSymbols
+        if (prev == null || prev.isHideCollidedMarkers != options.isHideCollidedMarkers) isHideCollidedMarkers = options.isHideCollidedMarkers
+        if (prev == null || prev.isHideCollidedCaptions != options.isHideCollidedCaptions) isHideCollidedCaptions = options.isHideCollidedCaptions
+        if (prev == null || prev.zIndex != options.zIndex) zIndex = options.zIndex
+        if (prev == null || prev.isVisible != options.isVisible) isVisible = options.isVisible
         tag = options.tag
+        _lastOptions = options
     }
 
     actual fun remove() {

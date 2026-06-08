@@ -82,17 +82,21 @@ actual class ArrowheadPathOverlay(
         onClickListener = listener
     }
 
+    private var _lastOptions: ArrowheadPathOptions? = null
+
     actual internal fun applyOptions(options: ArrowheadPathOptions) {
-        coords = options.coords
-        width = options.width
-        outlineWidth = options.outlineWidth
-        color = options.color
-        outlineColor = options.outlineColor
-        elevation = options.elevation
-        headSizeRatio = options.headSizeRatio
-        zIndex = options.zIndex
-        isVisible = options.isVisible
+        val prev = _lastOptions
+        if (prev == null || prev.coords != options.coords) coords = options.coords
+        if (prev == null || prev.width != options.width) width = options.width
+        if (prev == null || prev.outlineWidth != options.outlineWidth) outlineWidth = options.outlineWidth
+        if (prev == null || prev.color != options.color) color = options.color
+        if (prev == null || prev.outlineColor != options.outlineColor) outlineColor = options.outlineColor
+        if (prev == null || prev.elevation != options.elevation) elevation = options.elevation
+        if (prev == null || prev.headSizeRatio != options.headSizeRatio) headSizeRatio = options.headSizeRatio
+        if (prev == null || prev.zIndex != options.zIndex) zIndex = options.zIndex
+        if (prev == null || prev.isVisible != options.isVisible) isVisible = options.isVisible
         tag = options.tag
+        _lastOptions = options
     }
 
     actual fun remove() {
