@@ -92,19 +92,16 @@ private fun drawTearDropUIImage(
     borderWidthPx: Int,
     backgroundColor: Int,
 ): UIImage? {
-    val hasShadow = shadowRadiusPx > 0f
-    val hasTail = tailHeightPx > 0
+    val metrics = TearDropMetrics(sizePx, shadowRadiusPx, shadowDx, shadowDy, tailHeightPx)
+    val hasShadow = metrics.hasShadow
+    val hasTail = metrics.hasTail
 
-    val shadowExtra = if (hasShadow) {
-        (shadowRadiusPx + kotlin.math.abs(shadowDx) + kotlin.math.abs(shadowDy)).toInt() + 2
-    } else 0
+    val totalWidth = metrics.totalSize.toDouble()
+    val totalHeight = metrics.totalSize.toDouble()
 
-    val totalWidth = (sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2).toDouble()
-    val totalHeight = (sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2).toDouble()
-
-    val cx = totalWidth / 2.0
-    val cy = (shadowExtra + sizePx / 2).toDouble()
-    val radius = sizePx / 2.0
+    val cx = metrics.cx
+    val cy = metrics.cy
+    val radius = metrics.radius
 
     // ── 꼬리 베지어 파라미터 ────────────────────────────────────────────────
     val alphaDeg = 45.0

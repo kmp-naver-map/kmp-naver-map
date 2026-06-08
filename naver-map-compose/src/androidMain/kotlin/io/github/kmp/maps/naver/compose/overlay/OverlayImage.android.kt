@@ -64,19 +64,16 @@ private fun buildTearDropBitmap(
     borderWidthPx: Int,
     backgroundColor: Int,
 ): android.graphics.Bitmap {
-    val hasShadow = shadowRadiusPx > 0f
-    val hasTail   = tailHeightPx > 0
+    val metrics = TearDropMetrics(sizePx, shadowRadiusPx, shadowDx, shadowDy, tailHeightPx)
+    val hasShadow = metrics.hasShadow
+    val hasTail   = metrics.hasTail
 
-    val shadowExtra = if (hasShadow) {
-        (shadowRadiusPx + kotlin.math.abs(shadowDx) + kotlin.math.abs(shadowDy)).toInt() + 2
-    } else 0
+    val totalWidth  = metrics.totalSize
+    val totalHeight = metrics.totalSize
 
-    val totalWidth  = sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2
-    val totalHeight = sizePx + (if (hasTail) tailHeightPx else 0) + shadowExtra * 2
-
-    val cx     = totalWidth / 2f
-    val cy     = (shadowExtra + sizePx / 2).toFloat()
-    val radius = sizePx / 2f
+    val cx     = metrics.cx.toFloat()
+    val cy     = metrics.cy.toFloat()
+    val radius = metrics.radius.toFloat()
 
     // ── 꼬리 베지어 파라미터 ────────────────────────────────────────────────
     val alphaDeg = 45f

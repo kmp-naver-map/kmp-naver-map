@@ -109,15 +109,8 @@ fun tearDropAnchor(
     shadowDx: Float = 0f,
     shadowDy: Float = 4f,
 ): io.github.kmp.maps.naver.compose.model.Anchor {
-    val shadowExtra = if (shadowRadiusPx > 0f)
-        (shadowRadiusPx + kotlin.math.abs(shadowDx) + kotlin.math.abs(shadowDy)).toInt() + 2
-    else 0
-    val totalHeight = sizePx + tailHeightPx + shadowExtra * 2
-    val tipBottomY  = shadowExtra + sizePx + tailHeightPx
-    return io.github.kmp.maps.naver.compose.model.Anchor(
-        x = 0.5f,
-        y = tipBottomY.toFloat() / totalHeight.toFloat(),
-    )
+    val metrics = TearDropMetrics(sizePx, shadowRadiusPx, shadowDx, shadowDy, tailHeightPx)
+    return io.github.kmp.maps.naver.compose.model.Anchor(x = 0.5f, y = metrics.anchorY)
 }
 
 /**
