@@ -3,7 +3,6 @@
 package io.github.kmp.maps.naver.compose.controller
 
 import cocoapods.NMapsMap.NMFCameraUpdate
-import cocoapods.NMapsMap.NMFCameraUpdateAnimation
 import cocoapods.NMapsMap.NMFMapView
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toIos
@@ -84,11 +83,4 @@ class IosNaverMapController(
         val latLng = mapView.projection.latlngFromPoint(CGPointMake(x.toDouble(), y.toDouble()))
         return latLng.toCommon()
     }
-}
-
-private fun CameraAnimation.toIos(): NMFCameraUpdateAnimation = when (this) {
-    CameraAnimation.None -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationNone
-    CameraAnimation.Linear -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationLinear
-    CameraAnimation.Easing -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationEaseOut
-    CameraAnimation.Fly -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationFly
 }

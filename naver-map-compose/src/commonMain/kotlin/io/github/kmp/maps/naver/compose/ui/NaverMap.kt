@@ -417,41 +417,8 @@ internal class NaverMapScopeImpl(
             else -> null
         }
 
-        // 라이프사이클: 마커 생성/제거
-        DisposableEffect(state) {
-            val options = MarkerOptions(
-                position = state.position, icon = resolvedIcon, caption = caption,
-                subCaption = subCaption, alpha = alpha, isVisible = isVisible, isFlat = isFlat,
-                isForceShowCaption = isForceShowCaption, isForceShowIcon = isForceShowIcon,
-                zIndex = zIndex, globalZIndex = globalZIndex,
-                width = width, height = height, angle = angle, anchor = anchor,
-                minZoom = minZoom, maxZoom = maxZoom,
-                isMinZoomInclusive = isMinZoomInclusive, isMaxZoomInclusive = isMaxZoomInclusive,
-                captionColor = captionColor, captionHaloColor = captionHaloColor,
-                captionTextSize = captionTextSize,
-                captionMinZoom = captionMinZoom, captionMaxZoom = captionMaxZoom,
-                captionRequestedWidth = captionRequestedWidth, captionOffset = captionOffset,
-                captionPerspectiveEnabled = captionPerspectiveEnabled,
-                subCaptionColor = subCaptionColor, subCaptionHaloColor = subCaptionHaloColor,
-                subCaptionTextSize = subCaptionTextSize,
-                subCaptionMinZoom = subCaptionMinZoom, subCaptionMaxZoom = subCaptionMaxZoom,
-                subCaptionRequestedWidth = subCaptionRequestedWidth,
-                isHideCollidedMarkers = isHideCollidedMarkers,
-                isHideCollidedSymbols = isHideCollidedSymbols,
-                isHideCollidedCaptions = isHideCollidedCaptions,
-                isIconPerspectiveEnabled = isIconPerspectiveEnabled,
-                iconTintColor = iconTintColor, tag = tag
-            )
-            val marker = this@NaverMapScopeImpl.state.addMarker(options)
-            state.marker = marker
-            onDispose {
-                state.marker = null
-                this@NaverMapScopeImpl.state.removeMarker(marker)
-            }
-        }
-
-        // 속성 변경 시 일괄 동기화
-        val currentOptions = MarkerOptions(
+        // 마커 속성을 한 번만 구성 (생성/동기화에서 공유)
+        val options = MarkerOptions(
             position = state.position, icon = resolvedIcon, caption = caption,
             subCaption = subCaption, alpha = alpha, isVisible = isVisible, isFlat = isFlat,
             isForceShowCaption = isForceShowCaption, isForceShowIcon = isForceShowIcon,
@@ -474,8 +441,20 @@ internal class NaverMapScopeImpl(
             isIconPerspectiveEnabled = isIconPerspectiveEnabled,
             iconTintColor = iconTintColor, tag = tag
         )
-        LaunchedEffect(currentOptions) {
-            state.marker?.applyOptions(currentOptions)
+
+        // 라이프사이클: 마커 생성/제거
+        DisposableEffect(state) {
+            val marker = this@NaverMapScopeImpl.state.addMarker(options)
+            state.marker = marker
+            onDispose {
+                state.marker = null
+                this@NaverMapScopeImpl.state.removeMarker(marker)
+            }
+        }
+
+        // 속성 변경 시 일괄 동기화
+        LaunchedEffect(options) {
+            state.marker?.applyOptions(options)
         }
 
         // 클릭 리스너 설정
@@ -495,12 +474,13 @@ internal class NaverMapScopeImpl(
     ) {
         val polyline = remember { mutableStateOf<PolylineOverlay?>(null) }
 
+        val options = PolylineOptions(
+            coords = coords, color = color, width = width, pattern = pattern,
+            capType = capType, joinType = joinType, zIndex = zIndex,
+            isVisible = isVisible, tag = tag
+        )
+
         DisposableEffect(pattern) {
-            val options = PolylineOptions(
-                coords = coords, color = color, width = width, pattern = pattern,
-                capType = capType, joinType = joinType, zIndex = zIndex,
-                isVisible = isVisible, tag = tag
-            )
             val overlay = this@NaverMapScopeImpl.state.addPolyline(options)
             polyline.value = overlay
             onDispose {
@@ -509,13 +489,8 @@ internal class NaverMapScopeImpl(
             }
         }
 
-        val currentOptions = PolylineOptions(
-            coords = coords, color = color, width = width, pattern = pattern,
-            capType = capType, joinType = joinType, zIndex = zIndex,
-            isVisible = isVisible, tag = tag
-        )
-        LaunchedEffect(currentOptions) {
-            polyline.value?.applyOptions(currentOptions)
+        LaunchedEffect(options) {
+            polyline.value?.applyOptions(options)
         }
 
         val currentOverlay = polyline.value
@@ -534,12 +509,13 @@ internal class NaverMapScopeImpl(
     ) {
         val polygon = remember { mutableStateOf<PolygonOverlay?>(null) }
 
+        val options = PolygonOptions(
+            coords = coords, holes = holes, fillColor = fillColor,
+            outlineColor = outlineColor, outlineWidth = outlineWidth,
+            zIndex = zIndex, isVisible = isVisible, tag = tag
+        )
+
         DisposableEffect(Unit) {
-            val options = PolygonOptions(
-                coords = coords, holes = holes, fillColor = fillColor,
-                outlineColor = outlineColor, outlineWidth = outlineWidth,
-                zIndex = zIndex, isVisible = isVisible, tag = tag
-            )
             val overlay = this@NaverMapScopeImpl.state.addPolygon(options)
             polygon.value = overlay
             onDispose {
@@ -548,13 +524,8 @@ internal class NaverMapScopeImpl(
             }
         }
 
-        val currentOptions = PolygonOptions(
-            coords = coords, holes = holes, fillColor = fillColor,
-            outlineColor = outlineColor, outlineWidth = outlineWidth,
-            zIndex = zIndex, isVisible = isVisible, tag = tag
-        )
-        LaunchedEffect(currentOptions) {
-            polygon.value?.applyOptions(currentOptions)
+        LaunchedEffect(options) {
+            polygon.value?.applyOptions(options)
         }
 
         val currentOverlay = polygon.value
@@ -572,12 +543,13 @@ internal class NaverMapScopeImpl(
     ) {
         val circle = remember { mutableStateOf<CircleOverlay?>(null) }
 
+        val options = CircleOptions(
+            center = center, radius = radius, fillColor = fillColor,
+            outlineColor = outlineColor, outlineWidth = outlineWidth,
+            zIndex = zIndex, isVisible = isVisible, tag = tag
+        )
+
         DisposableEffect(Unit) {
-            val options = CircleOptions(
-                center = center, radius = radius, fillColor = fillColor,
-                outlineColor = outlineColor, outlineWidth = outlineWidth,
-                zIndex = zIndex, isVisible = isVisible, tag = tag
-            )
             val overlay = this@NaverMapScopeImpl.state.addCircle(options)
             circle.value = overlay
             onDispose {
@@ -586,13 +558,8 @@ internal class NaverMapScopeImpl(
             }
         }
 
-        val currentOptions = CircleOptions(
-            center = center, radius = radius, fillColor = fillColor,
-            outlineColor = outlineColor, outlineWidth = outlineWidth,
-            zIndex = zIndex, isVisible = isVisible, tag = tag
-        )
-        LaunchedEffect(currentOptions) {
-            circle.value?.applyOptions(currentOptions)
+        LaunchedEffect(options) {
+            circle.value?.applyOptions(options)
         }
 
         val currentOverlay = circle.value
@@ -613,26 +580,7 @@ internal class NaverMapScopeImpl(
     ) {
         val path = remember { mutableStateOf<PathOverlay?>(null) }
 
-        DisposableEffect(Unit) {
-            val options = PathOptions(
-                coords = coords, width = width, outlineWidth = outlineWidth,
-                color = color, outlineColor = outlineColor,
-                passedColor = passedColor, passedOutlineColor = passedOutlineColor,
-                progress = progress, patternInterval = patternInterval,
-                isHideCollidedSymbols = isHideCollidedSymbols,
-                isHideCollidedMarkers = isHideCollidedMarkers,
-                isHideCollidedCaptions = isHideCollidedCaptions,
-                zIndex = zIndex, isVisible = isVisible, tag = tag
-            )
-            val overlay = this@NaverMapScopeImpl.state.addPath(options)
-            path.value = overlay
-            onDispose {
-                this@NaverMapScopeImpl.state.removePath(overlay)
-                path.value = null
-            }
-        }
-
-        val currentOptions = PathOptions(
+        val options = PathOptions(
             coords = coords, width = width, outlineWidth = outlineWidth,
             color = color, outlineColor = outlineColor,
             passedColor = passedColor, passedOutlineColor = passedOutlineColor,
@@ -642,8 +590,18 @@ internal class NaverMapScopeImpl(
             isHideCollidedCaptions = isHideCollidedCaptions,
             zIndex = zIndex, isVisible = isVisible, tag = tag
         )
-        LaunchedEffect(currentOptions) {
-            path.value?.applyOptions(currentOptions)
+
+        DisposableEffect(Unit) {
+            val overlay = this@NaverMapScopeImpl.state.addPath(options)
+            path.value = overlay
+            onDispose {
+                this@NaverMapScopeImpl.state.removePath(overlay)
+                path.value = null
+            }
+        }
+
+        LaunchedEffect(options) {
+            path.value?.applyOptions(options)
         }
 
         val currentOverlay = path.value
@@ -662,13 +620,14 @@ internal class NaverMapScopeImpl(
     ) {
         val arrowheadPath = remember { mutableStateOf<ArrowheadPathOverlay?>(null) }
 
+        val options = ArrowheadPathOptions(
+            coords = coords, width = width, outlineWidth = outlineWidth,
+            color = color, outlineColor = outlineColor,
+            elevation = elevation, headSizeRatio = headSizeRatio,
+            zIndex = zIndex, isVisible = isVisible, tag = tag
+        )
+
         DisposableEffect(Unit) {
-            val options = ArrowheadPathOptions(
-                coords = coords, width = width, outlineWidth = outlineWidth,
-                color = color, outlineColor = outlineColor,
-                elevation = elevation, headSizeRatio = headSizeRatio,
-                zIndex = zIndex, isVisible = isVisible, tag = tag
-            )
             val overlay = this@NaverMapScopeImpl.state.addArrowheadPath(options)
             arrowheadPath.value = overlay
             onDispose {
@@ -677,14 +636,8 @@ internal class NaverMapScopeImpl(
             }
         }
 
-        val currentOptions = ArrowheadPathOptions(
-            coords = coords, width = width, outlineWidth = outlineWidth,
-            color = color, outlineColor = outlineColor,
-            elevation = elevation, headSizeRatio = headSizeRatio,
-            zIndex = zIndex, isVisible = isVisible, tag = tag
-        )
-        LaunchedEffect(currentOptions) {
-            arrowheadPath.value?.applyOptions(currentOptions)
+        LaunchedEffect(options) {
+            arrowheadPath.value?.applyOptions(options)
         }
 
         val currentOverlay = arrowheadPath.value
@@ -705,14 +658,15 @@ internal class NaverMapScopeImpl(
     ) {
         val infoWindow = remember { mutableStateOf<InfoWindow?>(null) }
 
+        val options = InfoWindowOptions(
+            position = position, text = text, alpha = alpha, zIndex = zIndex,
+            anchor = anchor, offsetX = offsetX, offsetY = offsetY,
+            textColor = textColor, textSize = textSize,
+            backgroundColor = backgroundColor, cornerRadiusDp = cornerRadiusDp,
+            isVisible = isVisible, tag = tag
+        )
+
         DisposableEffect(Unit) {
-            val options = InfoWindowOptions(
-                position = position, text = text, alpha = alpha, zIndex = zIndex,
-                anchor = anchor, offsetX = offsetX, offsetY = offsetY,
-                textColor = textColor, textSize = textSize,
-                backgroundColor = backgroundColor, cornerRadiusDp = cornerRadiusDp,
-                isVisible = isVisible, tag = tag
-            )
             val overlay = this@NaverMapScopeImpl.state.addInfoWindow(options)
             infoWindow.value = overlay
             onDispose {
@@ -721,15 +675,8 @@ internal class NaverMapScopeImpl(
             }
         }
 
-        val currentOptions = InfoWindowOptions(
-            position = position, text = text, alpha = alpha, zIndex = zIndex,
-            anchor = anchor, offsetX = offsetX, offsetY = offsetY,
-            textColor = textColor, textSize = textSize,
-            backgroundColor = backgroundColor, cornerRadiusDp = cornerRadiusDp,
-            isVisible = isVisible, tag = tag
-        )
-        LaunchedEffect(currentOptions) {
-            infoWindow.value?.applyOptions(currentOptions)
+        LaunchedEffect(options) {
+            infoWindow.value?.applyOptions(options)
         }
 
         val currentOverlay = infoWindow.value

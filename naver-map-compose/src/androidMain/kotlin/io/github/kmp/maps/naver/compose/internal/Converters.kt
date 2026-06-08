@@ -3,6 +3,7 @@ package io.github.kmp.maps.naver.compose.internal
 import android.content.res.Resources
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.overlay.PolylineOverlay
+import io.github.kmp.maps.naver.compose.model.CameraAnimation
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
@@ -82,6 +83,17 @@ internal fun com.naver.maps.map.LocationTrackingMode.toCommon(): LocationTrackin
     com.naver.maps.map.LocationTrackingMode.NoFollow -> LocationTrackingMode.NoFollow
     com.naver.maps.map.LocationTrackingMode.Follow -> LocationTrackingMode.Follow
     com.naver.maps.map.LocationTrackingMode.Face -> LocationTrackingMode.Face
+}
+
+// ──────────────────────────────
+// CameraAnimation
+// ──────────────────────────────
+
+internal fun CameraAnimation.toNaver(): com.naver.maps.map.CameraAnimation = when (this) {
+    CameraAnimation.None -> com.naver.maps.map.CameraAnimation.None
+    CameraAnimation.Linear -> com.naver.maps.map.CameraAnimation.Linear
+    CameraAnimation.Easing -> com.naver.maps.map.CameraAnimation.Easing
+    CameraAnimation.Fly -> com.naver.maps.map.CameraAnimation.Fly
 }
 
 // ──────────────────────────────

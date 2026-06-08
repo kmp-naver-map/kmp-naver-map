@@ -5,6 +5,7 @@ package io.github.kmp.maps.naver.compose.internal
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
 import cocoapods.NMapsMap.*
+import io.github.kmp.maps.naver.compose.model.CameraAnimation
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.model.LatLngBounds
@@ -121,6 +122,17 @@ internal fun NMFMyPositionMode.toCommon(): LocationTrackingMode = when (this) {
     NMFMyPositionDirection -> LocationTrackingMode.Follow
     NMFMyPositionCompass -> LocationTrackingMode.Face
     else -> LocationTrackingMode.None
+}
+
+// ──────────────────────────────
+// CameraAnimation
+// ──────────────────────────────
+
+internal fun CameraAnimation.toIos(): NMFCameraUpdateAnimation = when (this) {
+    CameraAnimation.None -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationNone
+    CameraAnimation.Linear -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationLinear
+    CameraAnimation.Easing -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationEaseOut
+    CameraAnimation.Fly -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationFly
 }
 
 // ──────────────────────────────

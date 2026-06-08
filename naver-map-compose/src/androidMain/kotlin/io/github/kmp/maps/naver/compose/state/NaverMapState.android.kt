@@ -10,7 +10,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.naver.maps.map.CameraAnimation
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.LocationSource
 import com.naver.maps.map.NaverMap
@@ -389,12 +388,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun removeMarker(marker: Marker) {
-        marker.nativeMarker.map = null
+        marker.remove()
         _markers.remove(marker)
     }
 
     actual fun clearMarkers() {
-        _markers.forEach { it.nativeMarker.map = null }
+        _markers.forEach { it.remove() }
         _markers.clear()
     }
 
@@ -416,12 +415,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun removePolyline(overlay: PolylineOverlay) {
-        overlay.nativePolyline.map = null
+        overlay.remove()
         _polylines.remove(overlay)
     }
 
     actual fun clearPolylines() {
-        _polylines.forEach { it.nativePolyline.map = null }
+        _polylines.forEach { it.remove() }
         _polylines.clear()
     }
 
@@ -441,12 +440,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun removePolygon(overlay: PolygonOverlay) {
-        overlay.nativePolygon.map = null
+        overlay.remove()
         _polygons.remove(overlay)
     }
 
     actual fun clearPolygons() {
-        _polygons.forEach { it.nativePolygon.map = null }
+        _polygons.forEach { it.remove() }
         _polygons.clear()
     }
 
@@ -466,12 +465,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun removeCircle(overlay: CircleOverlay) {
-        overlay.nativeCircle.map = null
+        overlay.remove()
         _circles.remove(overlay)
     }
 
     actual fun clearCircles() {
-        _circles.forEach { it.nativeCircle.map = null }
+        _circles.forEach { it.remove() }
         _circles.clear()
     }
 
@@ -498,12 +497,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun removePath(overlay: PathOverlay) {
-        overlay.nativePathOverlay.map = null
+        overlay.remove()
         _paths.remove(overlay)
     }
 
     actual fun clearPaths() {
-        _paths.forEach { it.nativePathOverlay.map = null }
+        _paths.forEach { it.remove() }
         _paths.clear()
     }
 
@@ -525,12 +524,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun removeArrowheadPath(overlay: ArrowheadPathOverlay) {
-        overlay.nativeArrowheadPathOverlay.map = null
+        overlay.remove()
         _arrowheadPaths.remove(overlay)
     }
 
     actual fun clearArrowheadPaths() {
-        _arrowheadPaths.forEach { it.nativeArrowheadPathOverlay.map = null }
+        _arrowheadPaths.forEach { it.remove() }
         _arrowheadPaths.clear()
     }
 
@@ -589,13 +588,7 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun animateCamera(position: CameraPosition, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int, onFinish: (() -> Unit)?) {
-        val nativeAnimation = when (animation) {
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> CameraAnimation.Easing
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> CameraAnimation.Fly
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> CameraAnimation.Linear
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> CameraAnimation.None
-        }
-        val update = CameraUpdate.toCameraPosition(position.toNaver()).animate(nativeAnimation, durationMs.toLong())
+        val update = CameraUpdate.toCameraPosition(position.toNaver()).animate(animation.toNaver(), durationMs.toLong())
         val map = naverMap ?: return
         if (onFinish != null) {
             map.addOnCameraIdleListener(object : NaverMap.OnCameraIdleListener {
@@ -610,13 +603,7 @@ actual class NaverMapState actual constructor(
 
     actual fun fitBounds(bounds: LatLngBounds, paddingDp: Int, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int) {
         val paddingPx = paddingDp.toFloat().dpToPx().toInt()
-        val nativeAnimation = when (animation) {
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> CameraAnimation.Easing
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> CameraAnimation.Fly
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> CameraAnimation.Linear
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> CameraAnimation.None
-        }
-        val update = CameraUpdate.fitBounds(bounds.toNaver(), paddingPx).animate(nativeAnimation, durationMs.toLong())
+        val update = CameraUpdate.fitBounds(bounds.toNaver(), paddingPx).animate(animation.toNaver(), durationMs.toLong())
         naverMap?.moveCamera(update)
     }
     actual fun setMapType(mapType: MapType) { naverMap?.mapType = mapType.toNaver() }

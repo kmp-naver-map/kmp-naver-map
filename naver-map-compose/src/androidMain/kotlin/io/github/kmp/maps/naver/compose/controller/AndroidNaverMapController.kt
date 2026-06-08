@@ -1,6 +1,5 @@
 package io.github.kmp.maps.naver.compose.controller
 
-import com.naver.maps.map.CameraAnimation
 import com.naver.maps.map.CameraUpdate
 import com.naver.maps.map.NaverMap
 import io.github.kmp.maps.naver.compose.internal.dpToPx
@@ -80,11 +79,3 @@ class AndroidNaverMapController(
         return latLng.toCommon()
     }
 }
-
-private fun io.github.kmp.maps.naver.compose.model.CameraAnimation.toNaver(): CameraAnimation =
-    when (this) {
-        io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> CameraAnimation.None
-        io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> CameraAnimation.Linear
-        io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> CameraAnimation.Easing
-        io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> CameraAnimation.Fly
-    }

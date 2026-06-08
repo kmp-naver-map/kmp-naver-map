@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import cocoapods.NMapsMap.*
-import io.github.kmp.maps.naver.compose.internal.dpToPoints
 import io.github.kmp.maps.naver.compose.internal.*
 import io.github.kmp.maps.naver.compose.model.CameraPosition
 import io.github.kmp.maps.naver.compose.model.LatLng
@@ -527,28 +526,16 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun animateCamera(position: CameraPosition, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int, onFinish: (() -> Unit)?) {
-        val nativeAnimation = when (animation) {
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationEaseOut
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationFly
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationLinear
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationNone
-        }
         val update = NMFCameraUpdate.cameraUpdateWithPosition(position.toNaver()).apply {
-            this.animation = nativeAnimation
+            this.animation = animation.toIos()
             animationDuration = durationMs.toDouble() / 1000.0
         }
         naverMap?.moveCamera(update) { isCancelled -> if (!isCancelled) onFinish?.invoke() }
     }
 
     actual fun fitBounds(bounds: LatLngBounds, paddingDp: Int, animation: io.github.kmp.maps.naver.compose.model.CameraAnimation, durationMs: Int) {
-        val nativeAnimation = when (animation) {
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Easing -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationEaseOut
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Fly -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationFly
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.Linear -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationLinear
-            io.github.kmp.maps.naver.compose.model.CameraAnimation.None -> NMFCameraUpdateAnimation.NMFCameraUpdateAnimationNone
-        }
         val update = NMFCameraUpdate.cameraUpdateWithFitBounds(bounds.toNaver(), paddingDp.dpToPoints()).apply {
-            this.animation = nativeAnimation
+            this.animation = animation.toIos()
             animationDuration = durationMs.toDouble() / 1000.0
         }
         naverMap?.moveCamera(update)
