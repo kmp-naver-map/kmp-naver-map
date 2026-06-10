@@ -2,6 +2,7 @@ package io.github.kmp.maps.naver.compose.overlay
 
 import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.overlay.PathOverlay as NaverPathOverlay
+import io.github.kmp.maps.naver.compose.internal.dpToPx
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.options.PathOptions
@@ -15,16 +16,17 @@ actual class PathOverlay(
             nativePathOverlay.coords = value.map { it.toNaver() }
         }
 
+    // 입력은 dp(마커와 통일). getter는 네이티브 px를 그대로 반환.
     actual var width: Float
         get() = nativePathOverlay.width.toFloat() // in Px
         set(value) {
-            nativePathOverlay.width = value.toInt()
+            nativePathOverlay.width = value.dpToPx().toInt()
         }
 
     actual var outlineWidth: Float
         get() = nativePathOverlay.outlineWidth.toFloat()
         set(value) {
-            nativePathOverlay.outlineWidth = value.toInt()
+            nativePathOverlay.outlineWidth = value.dpToPx().toInt()
         }
 
     actual var color: Int
@@ -59,8 +61,9 @@ actual class PathOverlay(
 
     actual var patternInterval: Float
         get() = nativePathOverlay.patternInterval.toFloat()
+        // 입력은 dp(마커와 통일). 네이티브는 px를 받으므로 dpToPx 변환.
         set(value) {
-            nativePathOverlay.patternInterval = value.toInt()
+            nativePathOverlay.patternInterval = value.dpToPx().toInt()
         }
 
     actual var isHideCollidedSymbols: Boolean

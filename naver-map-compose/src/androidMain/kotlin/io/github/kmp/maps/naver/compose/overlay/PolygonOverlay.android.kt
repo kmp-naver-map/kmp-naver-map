@@ -1,5 +1,6 @@
 package io.github.kmp.maps.naver.compose.overlay
 
+import io.github.kmp.maps.naver.compose.internal.dpToPx
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
@@ -27,7 +28,8 @@ actual open class PolygonOverlay internal constructor(
 
     actual var outlineWidth: Float
         get() = nativePolygon.outlineWidth.toFloat()
-        set(value) { nativePolygon.outlineWidth = value.toInt() }
+        // 입력은 dp(마커와 통일). 네이티브는 px를 받으므로 dpToPx 변환.
+        set(value) { nativePolygon.outlineWidth = value.dpToPx().toInt() }
 
     actual var zIndex: Int
         get() = nativePolygon.zIndex

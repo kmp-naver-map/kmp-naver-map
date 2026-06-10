@@ -2,6 +2,7 @@ package io.github.kmp.maps.naver.compose.overlay
 
 import com.naver.maps.map.overlay.ArrowheadPathOverlay as NaverArrowheadPathOverlay
 import com.naver.maps.map.overlay.Overlay
+import io.github.kmp.maps.naver.compose.internal.dpToPx
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.options.ArrowheadPathOptions
@@ -15,16 +16,17 @@ actual class ArrowheadPathOverlay(
             nativeArrowheadPathOverlay.coords = value.map { it.toNaver() }
         }
 
+    // 입력은 dp(마커와 통일). 네이티브는 px를 받으므로 dpToPx 변환.
     actual var width: Float
         get() = nativeArrowheadPathOverlay.width.toFloat()
         set(value) {
-            nativeArrowheadPathOverlay.width = value.toInt()
+            nativeArrowheadPathOverlay.width = value.dpToPx().toInt()
         }
 
     actual var outlineWidth: Float
         get() = nativeArrowheadPathOverlay.outlineWidth.toFloat()
         set(value) {
-            nativeArrowheadPathOverlay.outlineWidth = value.toInt()
+            nativeArrowheadPathOverlay.outlineWidth = value.dpToPx().toInt()
         }
 
     actual var color: Int
@@ -41,8 +43,9 @@ actual class ArrowheadPathOverlay(
 
     actual var elevation: Float
         get() = nativeArrowheadPathOverlay.elevation.toFloat()
+        // 입력은 dp(마커와 통일). 네이티브는 px를 받으므로 dpToPx 변환.
         set(value) {
-            nativeArrowheadPathOverlay.elevation = value.toInt()
+            nativeArrowheadPathOverlay.elevation = value.dpToPx().toInt()
         }
 
     actual var headSizeRatio: Float

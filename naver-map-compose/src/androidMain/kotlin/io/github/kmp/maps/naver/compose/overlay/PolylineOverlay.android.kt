@@ -1,5 +1,6 @@
 package io.github.kmp.maps.naver.compose.overlay
 
+import io.github.kmp.maps.naver.compose.internal.dpToPx
 import io.github.kmp.maps.naver.compose.internal.toCommon
 import io.github.kmp.maps.naver.compose.internal.toNaver
 import io.github.kmp.maps.naver.compose.model.LatLng
@@ -20,14 +21,21 @@ actual open class PolylineOverlay internal constructor(
 
     actual var width: Float
         get() = nativePolyline.width.toFloat()
-        set(value) { nativePolyline.width = value.toInt() }
+        // 입력은 dp(마커와 통일). 네이티브는 px를 받으므로 dpToPx 변환.
+        set(value) { nativePolyline.width = value.dpToPx().toInt() }
 
 
-    // Android SDK의 pattern은 val(read-only)이므로 생성 시에만 적용 가능
+    // Android SDK의 PolylineOverlay는 setPattern(int...)로 패턴 설정이 가능하다(픽셀 단위).
+    // varargs setter라 Kotlin 프로퍼티(nativePolyline.pattern)는 val로 노출되므로,
+    // setPattern(...)을 spread로 직접 호출한다. 입력값은 dp로 받아(다른 선 두께와 통일)
+    // dpToPx 변환 후 반영하고, getter는 입력한 dp 값을 그대로 돌려주기 위해 backing field를 유지한다.
     private var _pattern: List<Float> = emptyList()
     actual var pattern: List<Float>
         get() = _pattern
-        set(value) { _pattern = value }
+        set(value) {
+            _pattern = value
+            nativePolyline.setPattern(*value.map { it.dpToPx().toInt() }.toIntArray())
+        }
 
     actual var capType: LineCap
         get() = nativePolyline.capType.toCommon()
