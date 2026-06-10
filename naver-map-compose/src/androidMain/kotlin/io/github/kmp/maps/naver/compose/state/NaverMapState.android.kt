@@ -354,49 +354,15 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun addMarker(options: MarkerOptions): Marker {
-        val nativeMarker = com.naver.maps.map.overlay.Marker().apply {
-            position = options.position.toNaver()
-            (options.icon as? OverlayImage)?.let { icon = it.nativeImage }
-            captionText = options.caption
-            subCaptionText = options.subCaption
-            alpha = options.alpha
-            isVisible = options.isVisible
-            isFlat = options.isFlat
-            isForceShowCaption = options.isForceShowCaption
-            isForceShowIcon = options.isForceShowIcon
-            zIndex = options.zIndex
-            globalZIndex = options.globalZIndex
-            width = if (options.width == Marker.MarkerSize.AUTO) com.naver.maps.map.overlay.Marker.SIZE_AUTO else options.width.dpToPx().toInt()
-            height = if (options.height == Marker.MarkerSize.AUTO) com.naver.maps.map.overlay.Marker.SIZE_AUTO else options.height.dpToPx().toInt()
-            angle = options.angle
-            anchor = PointF(options.anchor.x, options.anchor.y)
-            minZoom = options.minZoom
-            maxZoom = options.maxZoom
-            isMinZoomInclusive = options.isMinZoomInclusive
-            isMaxZoomInclusive = options.isMaxZoomInclusive
-            captionColor = options.captionColor
-            captionHaloColor = options.captionHaloColor
-            captionTextSize = options.captionTextSize
-            captionMinZoom = options.captionMinZoom
-            captionMaxZoom = options.captionMaxZoom
-            captionRequestedWidth = options.captionRequestedWidth.dpToPx().toInt()
-            captionOffset = options.captionOffset.dpToPx().toInt()
-            isCaptionPerspectiveEnabled = options.captionPerspectiveEnabled
-            subCaptionColor = options.subCaptionColor
-            subCaptionHaloColor = options.subCaptionHaloColor
-            subCaptionTextSize = options.subCaptionTextSize
-            subCaptionMinZoom = options.subCaptionMinZoom
-            subCaptionMaxZoom = options.subCaptionMaxZoom
-            subCaptionRequestedWidth = options.subCaptionRequestedWidth.toInt()
-            isHideCollidedMarkers = options.isHideCollidedMarkers
-            isHideCollidedSymbols = options.isHideCollidedSymbols
-            isHideCollidedCaptions = options.isHideCollidedCaptions
-            isIconPerspectiveEnabled = options.isIconPerspectiveEnabled
-            if (options.iconTintColor != 0) iconTintColor = options.iconTintColor
-            tag = options.tag
-            map = naverMap
-        }
-        return Marker(nativeMarker).also { _markers.add(it) }
+        // 옵션→네이티브 속성 매핑은 Marker.applyOptions 한 곳에서만 수행한다.
+        // (이전에는 여기서 전 속성을 세팅한 뒤, DSL의 LaunchedEffect가 곧바로 applyOptions로
+        //  똑같이 한 번 더 적용하는 이중 작업이 있었다. applyOptions가 _lastOptions를
+        //  기록하므로, 직후 LaunchedEffect의 applyOptions는 동일 인스턴스라 no-op가 된다.)
+        val marker = Marker(com.naver.maps.map.overlay.Marker())
+        marker.applyOptions(options)
+        marker.nativeMarker.map = naverMap
+        _markers.add(marker)
+        return marker
     }
 
     actual fun removeMarker(marker: Marker) {
@@ -410,20 +376,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun addPolyline(options: PolylineOptions): PolylineOverlay {
-        val nativePolyline = com.naver.maps.map.overlay.PolylineOverlay().apply {
-            coords = options.coords.map { it.toNaver() }
-            color = options.color
-            width = options.width.dpToPx().toInt()
-            capType = options.capType.toNaver()
-            joinType = options.joinType.toNaver()
-            zIndex = options.zIndex
-            isVisible = options.isVisible
-            tag = options.tag
-            map = naverMap
-        }
-        return PolylineOverlay(nativePolyline).apply {
-            if (options.pattern.isNotEmpty()) pattern = options.pattern
-        }.also { _polylines.add(it) }
+        // 옵션→네이티브 매핑은 applyOptions 한 곳에서만 수행한다(생성 시 이중 적용 제거).
+        val overlay = PolylineOverlay(com.naver.maps.map.overlay.PolylineOverlay())
+        overlay.applyOptions(options)
+        overlay.nativePolyline.map = naverMap
+        _polylines.add(overlay)
+        return overlay
     }
 
     actual fun removePolyline(overlay: PolylineOverlay) {
@@ -437,18 +395,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun addPolygon(options: PolygonOptions): PolygonOverlay {
-        val nativePolygon = com.naver.maps.map.overlay.PolygonOverlay().apply {
-            coords = options.coords.map { it.toNaver() }
-            holes = options.holes.map { hole -> hole.map { it.toNaver() } }
-            color = options.fillColor
-            outlineColor = options.outlineColor
-            outlineWidth = options.outlineWidth.dpToPx().toInt()
-            zIndex = options.zIndex
-            isVisible = options.isVisible
-            tag = options.tag
-            map = naverMap
-        }
-        return PolygonOverlay(nativePolygon).also { _polygons.add(it) }
+        // 옵션→네이티브 매핑은 applyOptions 한 곳에서만 수행한다(생성 시 이중 적용 제거).
+        val overlay = PolygonOverlay(com.naver.maps.map.overlay.PolygonOverlay())
+        overlay.applyOptions(options)
+        overlay.nativePolygon.map = naverMap
+        _polygons.add(overlay)
+        return overlay
     }
 
     actual fun removePolygon(overlay: PolygonOverlay) {
@@ -462,18 +414,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun addCircle(options: CircleOptions): CircleOverlay {
-        val nativeCircle = com.naver.maps.map.overlay.CircleOverlay().apply {
-            center = options.center.toNaver()
-            radius = options.radius
-            color = options.fillColor
-            outlineColor = options.outlineColor
-            outlineWidth = options.outlineWidth.dpToPx().toInt()
-            zIndex = options.zIndex
-            isVisible = options.isVisible
-            tag = options.tag
-            map = naverMap
-        }
-        return CircleOverlay(nativeCircle).also { _circles.add(it) }
+        // 옵션→네이티브 매핑은 applyOptions 한 곳에서만 수행한다(생성 시 이중 적용 제거).
+        val overlay = CircleOverlay(com.naver.maps.map.overlay.CircleOverlay())
+        overlay.applyOptions(options)
+        overlay.nativeCircle.map = naverMap
+        _circles.add(overlay)
+        return overlay
     }
 
     actual fun removeCircle(overlay: CircleOverlay) {
@@ -487,25 +433,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun addPath(options: PathOptions): PathOverlay {
-        val nativePath = com.naver.maps.map.overlay.PathOverlay().apply {
-            coords = options.coords.map { it.toNaver() }
-            width = options.width.dpToPx().toInt()
-            outlineWidth = options.outlineWidth.dpToPx().toInt()
-            color = options.color
-            outlineColor = options.outlineColor
-            passedColor = options.passedColor
-            passedOutlineColor = options.passedOutlineColor
-            progress = options.progress
-            patternInterval = options.patternInterval.dpToPx().toInt()
-            isHideCollidedSymbols = options.isHideCollidedSymbols
-            isHideCollidedMarkers = options.isHideCollidedMarkers
-            isHideCollidedCaptions = options.isHideCollidedCaptions
-            zIndex = options.zIndex
-            isVisible = options.isVisible
-            tag = options.tag
-            map = naverMap
-        }
-        return PathOverlay(nativePath).also { _paths.add(it) }
+        // 옵션→네이티브 매핑은 applyOptions 한 곳에서만 수행한다(생성 시 이중 적용 제거).
+        val overlay = PathOverlay()
+        overlay.applyOptions(options)
+        overlay.nativePathOverlay.map = naverMap
+        _paths.add(overlay)
+        return overlay
     }
 
     actual fun removePath(overlay: PathOverlay) {
@@ -519,20 +452,12 @@ actual class NaverMapState actual constructor(
     }
 
     actual fun addArrowheadPath(options: ArrowheadPathOptions): ArrowheadPathOverlay {
-        val nativeArrowheadPath = com.naver.maps.map.overlay.ArrowheadPathOverlay().apply {
-            coords = options.coords.map { it.toNaver() }
-            width = options.width.dpToPx().toInt()
-            outlineWidth = options.outlineWidth.dpToPx().toInt()
-            color = options.color
-            outlineColor = options.outlineColor
-            elevation = options.elevation.dpToPx().toInt()
-            headSizeRatio = options.headSizeRatio
-            zIndex = options.zIndex
-            isVisible = options.isVisible
-            tag = options.tag
-            map = naverMap
-        }
-        return ArrowheadPathOverlay(nativeArrowheadPath).also { _arrowheadPaths.add(it) }
+        // 옵션→네이티브 매핑은 applyOptions 한 곳에서만 수행한다(생성 시 이중 적용 제거).
+        val overlay = ArrowheadPathOverlay()
+        overlay.applyOptions(options)
+        overlay.nativeArrowheadPathOverlay.map = naverMap
+        _arrowheadPaths.add(overlay)
+        return overlay
     }
 
     actual fun removeArrowheadPath(overlay: ArrowheadPathOverlay) {
@@ -549,31 +474,24 @@ actual class NaverMapState actual constructor(
         val adapterContext = _context ?: throw IllegalStateException("Context is not available. Ensure the map is ready.")
         val nativeInfoWindow = com.naver.maps.map.overlay.InfoWindow()
         val infoWindow = InfoWindow(nativeInfoWindow)
-        nativeInfoWindow.apply {
-            position = options.position.toNaver()
-            alpha = options.alpha
-            zIndex = options.zIndex
-            anchor = PointF(options.anchor.x, options.anchor.y)
-            offsetX = options.offsetX
-            offsetY = options.offsetY
-            adapter = object : com.naver.maps.map.overlay.InfoWindow.ViewAdapter() {
-                override fun getView(iw: com.naver.maps.map.overlay.InfoWindow): View {
-                    return TextView(adapterContext).apply {
-                        text = infoWindow.text
-                        setTextColor(infoWindow.textColor)
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, infoWindow.textSize)
-                        val shape = GradientDrawable().apply {
-                            setColor(infoWindow.backgroundColor)
-                            cornerRadius = infoWindow.cornerRadiusDp.dpToPx()
-                        }
-                        background = shape
-                        val p = 8.toFloat().dpToPx().toInt()
-                        setPadding(p, p, p, p)
+        // 뷰 어댑터는 생성 시 1회만 설정한다(infoWindow의 text/color 등을 지연 참조).
+        nativeInfoWindow.adapter = object : com.naver.maps.map.overlay.InfoWindow.ViewAdapter() {
+            override fun getView(iw: com.naver.maps.map.overlay.InfoWindow): View {
+                return TextView(adapterContext).apply {
+                    text = infoWindow.text
+                    setTextColor(infoWindow.textColor)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, infoWindow.textSize)
+                    val shape = GradientDrawable().apply {
+                        setColor(infoWindow.backgroundColor)
+                        cornerRadius = infoWindow.cornerRadiusDp.dpToPx()
                     }
+                    background = shape
+                    val p = 8.toFloat().dpToPx().toInt()
+                    setPadding(p, p, p, p)
                 }
             }
-            tag = options.tag
         }
+        // 위치/정렬/오프셋/색상 등 옵션 매핑은 applyOptions에서 일괄 수행한다(이중 적용 제거).
         infoWindow.applyOptions(options)
         if (marker != null) nativeInfoWindow.open(marker.nativeMarker) else naverMap?.let { nativeInfoWindow.open(it) }
         return infoWindow.also { _infoWindows.add(it) }

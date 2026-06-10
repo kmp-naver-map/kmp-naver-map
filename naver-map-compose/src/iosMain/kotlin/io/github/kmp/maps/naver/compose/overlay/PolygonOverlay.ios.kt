@@ -2,7 +2,6 @@
 
 package io.github.kmp.maps.naver.compose.overlay
 
-import cocoapods.NMapsMap.NMGLatLng
 import cocoapods.NMapsMap.NMGPolygon
 import cocoapods.NMapsMap.NMGLineString
 import cocoapods.NMapsMap.NMFOverlay
@@ -19,23 +18,29 @@ actual open class PolygonOverlay internal constructor(
 ) {
     actual var tag: Any? = null
 
+    // coords/holes는 backing field로 보관한다. setter가 native polygon을 역참조하지 않으므로
+    // (이전엔 한쪽 setter가 다른 쪽 getter→nativePolygon.polygon을 읽어, polygon이 아직 없는
+    //  bare 객체에서 NPE 위험이 있었다) bare NMFPolygonOverlay()에서도 안전하게 적용된다.
+    private var _coords: List<LatLng> = emptyList()
+    private var _holes: List<List<LatLng>> = emptyList()
+
     actual var coords: List<LatLng>
-        get() = nativePolygon.polygon.exteriorRing().points().map { (it as NMGLatLng).toCommon() }
+        get() = _coords
         set(value) {
-            updatePolygon(value, holes)
+            _coords = value
+            updatePolygon()
         }
 
     actual var holes: List<List<LatLng>>
-        get() = nativePolygon.polygon.interiorRings().map { ring ->
-            (ring as NMGLineString).points().map { (it as NMGLatLng).toCommon() }
-        }
+        get() = _holes
         set(value) {
-            updatePolygon(coords, value)
+            _holes = value
+            updatePolygon()
         }
 
-    private fun updatePolygon(outer: List<LatLng>, inners: List<List<LatLng>>) {
-        val exteriorRing = NMGLineString.lineStringWithPoints(outer.map { it.toNaver() })
-        val interiorRings = inners.map { ring ->
+    private fun updatePolygon() {
+        val exteriorRing = NMGLineString.lineStringWithPoints(_coords.map { it.toNaver() })
+        val interiorRings = _holes.map { ring ->
             NMGLineString.lineStringWithPoints(ring.map { it.toNaver() })
         }
         nativePolygon.polygon = NMGPolygon.polygonWithRing(exteriorRing, interiorRings = interiorRings)

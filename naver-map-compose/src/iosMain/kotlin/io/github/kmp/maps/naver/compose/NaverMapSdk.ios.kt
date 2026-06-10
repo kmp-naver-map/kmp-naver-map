@@ -1,10 +1,6 @@
 package io.github.kmp.maps.naver.compose
 
-import cocoapods.NMapsMap.NMFAuthManager
-import kotlinx.cinterop.ExperimentalForeignApi
-
-@OptIn(ExperimentalForeignApi::class)
 internal actual fun initializePlatform(clientId: String) {
-    // iOS SDK 최신 규격: clientId 대신 ncpKeyId를 사용합니다.
-    NMFAuthManager.shared().ncpKeyId = clientId
+    // 실제 인증(ncpKeyId) 적용은 NaverMapView의 factory에서 NaverMapSdk.clientId를 사용해
+    // 수행합니다(Android와 대칭). 여기서 NMFAuthManager에 또 설정하면 이중 설정이 됩니다.
 }
