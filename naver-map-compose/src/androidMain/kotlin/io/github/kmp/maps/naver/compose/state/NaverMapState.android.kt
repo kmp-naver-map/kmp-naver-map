@@ -294,8 +294,19 @@ actual class NaverMapState actual constructor(
     actual var onMapClick: ((latLng: LatLng) -> Unit)? = null
     actual var onSymbolClick: ((symbol: Symbol) -> Boolean)? = null
 
+    // 카메라가 움직이는 중인지 여부. idle 이후 첫 변경 콜백에서만 onCameraChangeStarted를
+    // 1회 발화시키기 위한 플래그 (iOS의 cameraWillChangeByReason과 동일한 "시작" 시맨틱).
+    private var _isCameraMoving = false
+
     private fun setupListeners(map: NaverMap) {
         map.addOnCameraChangeListener { reason, animated ->
+            // Android SDK에는 별도의 "변경 시작" 리스너가 없으므로, idle 이후 첫 변경을
+            // 시작 시점으로 보고 onCameraChangeStarted를 한 번만 호출한다.
+            if (!_isCameraMoving) {
+                _isCameraMoving = true
+                onCameraChangeStarted?.invoke(reason)
+            }
+
             // 사용자 제스처(드래그/핀치 등)로 카메라가 변경된 경우 Follow/Face → NoFollow 다운그레이드
             // iOS의 cameraWillChangeByReason == -1L 처리와 동일한 로직
             // Naver Maps SDK: gesture reason = -1 (NMFMapChangedByGesture와 동일한 값)
@@ -314,6 +325,7 @@ actual class NaverMapState actual constructor(
             onCameraChange?.invoke(reason, animated)
         }
         map.addOnCameraIdleListener {
+            _isCameraMoving = false
             onCameraIdle?.invoke()
         }
         
@@ -591,12 +603,9 @@ actual class NaverMapState actual constructor(
         val update = CameraUpdate.toCameraPosition(position.toNaver()).animate(animation.toNaver(), durationMs.toLong())
         val map = naverMap ?: return
         if (onFinish != null) {
-            map.addOnCameraIdleListener(object : NaverMap.OnCameraIdleListener {
-                override fun onCameraIdle() {
-                    map.removeOnCameraIdleListener(this)
-                    onFinish.invoke()
-                }
-            })
+            // 임의의 idle이 아니라 이 카메라 업데이트가 정상 완료됐을 때만 호출한다.
+            // (취소 시에는 호출되지 않음 → iOS의 moveCamera(update){ isCancelled }와 동일)
+            update.finishCallback { onFinish() }
         }
         map.moveCamera(update)
     }

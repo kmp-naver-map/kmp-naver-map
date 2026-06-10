@@ -151,7 +151,8 @@ actual open class Marker internal constructor(
 
     actual var subCaptionRequestedWidth: Float
         get() = nativeMarker.subCaptionRequestedWidth.toFloat()
-        set(value) { nativeMarker.subCaptionRequestedWidth = value.toInt() }
+        // captionRequestedWidth와 동일하게 dp 기준으로 변환해 단위를 통일한다.
+        set(value) { nativeMarker.subCaptionRequestedWidth = value.dpToPx().toInt() }
 
     actual var isHideCollidedMarkers: Boolean
         get() = nativeMarker.isHideCollidedMarkers

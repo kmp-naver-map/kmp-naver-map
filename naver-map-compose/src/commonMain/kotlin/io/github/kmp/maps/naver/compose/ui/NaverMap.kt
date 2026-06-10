@@ -236,30 +236,36 @@ interface NaverMapScope {
         iconTintColor: Int = OverlayDefaults.COLOR_TRANSPARENT,
         tag: Any? = null,
         onClick: ((Marker) -> Boolean)? = null
-    ) = Marker(
-        state = rememberMarkerState(position),
-        icon = icon, caption = caption, subCaption = subCaption,
-        alpha = alpha, isVisible = isVisible, isFlat = isFlat,
-        isForceShowCaption = isForceShowCaption, isForceShowIcon = isForceShowIcon,
-        zIndex = zIndex, globalZIndex = globalZIndex,
-        width = width, height = height, angle = angle, anchor = anchor,
-        minZoom = minZoom, maxZoom = maxZoom,
-        isMinZoomInclusive = isMinZoomInclusive, isMaxZoomInclusive = isMaxZoomInclusive,
-        captionColor = captionColor, captionHaloColor = captionHaloColor,
-        captionTextSize = captionTextSize,
-        captionMinZoom = captionMinZoom, captionMaxZoom = captionMaxZoom,
-        captionRequestedWidth = captionRequestedWidth, captionOffset = captionOffset,
-        captionPerspectiveEnabled = captionPerspectiveEnabled,
-        subCaptionColor = subCaptionColor, subCaptionHaloColor = subCaptionHaloColor,
-        subCaptionTextSize = subCaptionTextSize,
-        subCaptionMinZoom = subCaptionMinZoom, subCaptionMaxZoom = subCaptionMaxZoom,
-        subCaptionRequestedWidth = subCaptionRequestedWidth,
-        isHideCollidedMarkers = isHideCollidedMarkers,
-        isHideCollidedSymbols = isHideCollidedSymbols,
-        isHideCollidedCaptions = isHideCollidedCaptions,
-        isIconPerspectiveEnabled = isIconPerspectiveEnabled,
-        iconTintColor = iconTintColor, tag = tag, onClick = onClick
-    )
+    ) {
+        // rememberMarkerState(position)은 최초 position만 보관하므로,
+        // position 인자가 바뀌어도 마커가 따라 움직이도록 명시적으로 동기화한다.
+        val markerState = rememberMarkerState(position)
+        LaunchedEffect(position) { markerState.position = position }
+        Marker(
+            state = markerState,
+            icon = icon, caption = caption, subCaption = subCaption,
+            alpha = alpha, isVisible = isVisible, isFlat = isFlat,
+            isForceShowCaption = isForceShowCaption, isForceShowIcon = isForceShowIcon,
+            zIndex = zIndex, globalZIndex = globalZIndex,
+            width = width, height = height, angle = angle, anchor = anchor,
+            minZoom = minZoom, maxZoom = maxZoom,
+            isMinZoomInclusive = isMinZoomInclusive, isMaxZoomInclusive = isMaxZoomInclusive,
+            captionColor = captionColor, captionHaloColor = captionHaloColor,
+            captionTextSize = captionTextSize,
+            captionMinZoom = captionMinZoom, captionMaxZoom = captionMaxZoom,
+            captionRequestedWidth = captionRequestedWidth, captionOffset = captionOffset,
+            captionPerspectiveEnabled = captionPerspectiveEnabled,
+            subCaptionColor = subCaptionColor, subCaptionHaloColor = subCaptionHaloColor,
+            subCaptionTextSize = subCaptionTextSize,
+            subCaptionMinZoom = subCaptionMinZoom, subCaptionMaxZoom = subCaptionMaxZoom,
+            subCaptionRequestedWidth = subCaptionRequestedWidth,
+            isHideCollidedMarkers = isHideCollidedMarkers,
+            isHideCollidedSymbols = isHideCollidedSymbols,
+            isHideCollidedCaptions = isHideCollidedCaptions,
+            isIconPerspectiveEnabled = isIconPerspectiveEnabled,
+            iconTintColor = iconTintColor, tag = tag, onClick = onClick
+        )
+    }
 
     /** 지도 위에 폴리라인을 표시합니다. */
     @Composable
@@ -388,7 +394,10 @@ internal class NaverMapScopeImpl(
 
     @Composable
     override fun MapEffect(vararg keys: Any?, block: suspend NaverMapState.() -> Unit) {
-        LaunchedEffect(keys) { block(state) }
+        // keys 배열을 펼쳐 각 원소를 개별 key로 전달해야 한다.
+        // LaunchedEffect(keys)로 넘기면 매 recomposition마다 새로 할당되는 배열 인스턴스가
+        // 단일 key로 잡혀 effect가 매번 취소·재시작된다.
+        LaunchedEffect(*keys) { block(state) }
     }
 
     // ── Marker ──────────────────────────────────────────────────

@@ -74,13 +74,20 @@ class IosNaverMapController(
         mapView.buildingHeight = height
     }
 
-    override fun latLngToScreen(latLng: LatLng): Pair<Float, Float> {
+    override fun latLngToScreen(latLng: LatLng): Pair<Float, Float>? {
         val point = mapView.projection.pointFromLatLng(latLng.toNaver())
-        return point.useContents { x.toFloat() to y.toFloat() }
+        return point.useContents {
+            val px = x.toFloat()
+            val py = y.toFloat()
+            // 투영 불가 시 SDK는 NaN 좌표를 반환한다.
+            if (px.isNaN() || py.isNaN()) null else px to py
+        }
     }
 
-    override fun screenToLatLng(x: Float, y: Float): LatLng {
+    override fun screenToLatLng(x: Float, y: Float): LatLng? {
         val latLng = mapView.projection.latlngFromPoint(CGPointMake(x.toDouble(), y.toDouble()))
+        // 투영 불가 좌표는 NaN으로 반환되므로 null로 변환한다.
+        if (latLng.lat().isNaN() || latLng.lng().isNaN()) return null
         return latLng.toCommon()
     }
 }
