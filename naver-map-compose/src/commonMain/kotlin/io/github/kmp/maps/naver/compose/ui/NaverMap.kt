@@ -322,6 +322,7 @@ interface NaverMapScope {
         passedOutlineColor: Int = OverlayDefaults.DEFAULT_PASSED_OUTLINE_COLOR,
         progress: Double = 0.0,
         patternInterval: Float = 0f,
+        patternImage: OverlayImage? = null,
         isHideCollidedSymbols: Boolean = false,
         isHideCollidedMarkers: Boolean = false,
         isHideCollidedCaptions: Boolean = false,
@@ -583,6 +584,7 @@ internal class NaverMapScopeImpl(
     override fun Path(
         coords: List<LatLng>, width: Float, outlineWidth: Float, color: Int, outlineColor: Int,
         passedColor: Int, passedOutlineColor: Int, progress: Double, patternInterval: Float,
+        patternImage: OverlayImage?,
         isHideCollidedSymbols: Boolean, isHideCollidedMarkers: Boolean,
         isHideCollidedCaptions: Boolean,
         zIndex: Int, isVisible: Boolean, tag: Any?, onClick: ((PathOverlay) -> Boolean)?
@@ -594,6 +596,7 @@ internal class NaverMapScopeImpl(
             color = color, outlineColor = outlineColor,
             passedColor = passedColor, passedOutlineColor = passedOutlineColor,
             progress = progress, patternInterval = patternInterval,
+            patternImage = patternImage,
             isHideCollidedSymbols = isHideCollidedSymbols,
             isHideCollidedMarkers = isHideCollidedMarkers,
             isHideCollidedCaptions = isHideCollidedCaptions,

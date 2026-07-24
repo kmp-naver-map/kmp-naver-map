@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.LayoutDirection
 import com.naver.maps.map.overlay.OverlayImage as NativeOverlayImage
+import io.github.kmp.maps.naver.compose.internal.dpToPx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.DrawableResource
@@ -284,4 +285,35 @@ actual fun rememberOverlayImage(
             OverlayImage.DEFAULT
         }
     }
+}
+
+/**
+ * 경로 패턴용 진행 방향 화살표를 그립니다.
+ * 위쪽을 가리키는 chevron 형태(밑변 중앙이 살짝 파인 삼각형)로,
+ * 네이버 지도 앱의 길찾기 경로 화살표와 유사한 모양입니다.
+ */
+actual fun createDirectionArrowOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int,
+): OverlayImage? = try {
+    val w = widthDp.dpToPx().toInt().coerceAtLeast(2)
+    val h = heightDp.dpToPx().toInt().coerceAtLeast(2)
+    val bitmap = createBitmap(w, h)
+    val canvas = android.graphics.Canvas(bitmap)
+    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        style = android.graphics.Paint.Style.FILL
+    }
+    val path = android.graphics.Path().apply {
+        moveTo(w / 2f, 0f)          // 꼭짓점 (진행 방향)
+        lineTo(w.toFloat(), h.toFloat())
+        lineTo(w / 2f, h * 0.72f)   // 밑변 중앙 파임 (chevron)
+        lineTo(0f, h.toFloat())
+        close()
+    }
+    canvas.drawPath(path, paint)
+    OverlayImage.fromBitmap(bitmap)
+} catch (_: Throwable) {
+    null
 }

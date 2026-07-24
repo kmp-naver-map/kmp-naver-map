@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.LayoutDirection
 import cocoapods.NMapsMap.NMFOverlayImage
 import cocoapods.NMapsMap.NMF_MARKER_IMAGE_DEFAULT
+import io.github.kmp.maps.naver.compose.internal.toUIColor
 import io.github.kmp.maps.naver.compose.internal.toUIImage
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.compose.resources.DrawableResource
@@ -361,4 +362,31 @@ actual fun rememberOverlayImage(
             OverlayImage.DEFAULT
         }
     }
+}
+
+/**
+ * 경로 패턴용 진행 방향 화살표를 그립니다.
+ * 위쪽을 가리키는 chevron 형태(밑변 중앙이 살짝 파인 삼각형)로,
+ * 네이버 지도 앱의 길찾기 경로 화살표와 유사한 모양입니다.
+ * dp를 포인트로 그대로 사용합니다(iOS 1pt = 1dp).
+ */
+actual fun createDirectionArrowOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int,
+): OverlayImage? {
+    val w = widthDp.toDouble().coerceAtLeast(2.0)
+    val h = heightDp.toDouble().coerceAtLeast(2.0)
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(w, h), false, 0.0)
+    val path = UIBezierPath.bezierPath()
+    path.moveToPoint(CGPointMake(w / 2.0, 0.0))          // 꼭짓점 (진행 방향)
+    path.addLineToPoint(CGPointMake(w, h))
+    path.addLineToPoint(CGPointMake(w / 2.0, h * 0.72))  // 밑변 중앙 파임 (chevron)
+    path.addLineToPoint(CGPointMake(0.0, h))
+    path.closePath()
+    color.toUIColor().setFill()
+    path.fill()
+    val image = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return image?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }
 }

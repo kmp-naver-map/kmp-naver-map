@@ -21,6 +21,7 @@ expect class PathOverlay {
     var passedOutlineColor: Int
     var progress: Double
     var patternInterval: Float
+    var patternImage: OverlayImage?
     var isHideCollidedSymbols: Boolean
     var isHideCollidedMarkers: Boolean
     var isHideCollidedCaptions: Boolean

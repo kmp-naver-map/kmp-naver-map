@@ -2,6 +2,12 @@
 
 이 프로젝트의 주요 변경 사항을 기록합니다. / Notable changes to this project.
 
+## [1.2.0]
+
+### Added (기능 추가)
+- **Path patternImage**: `PathOverlay`/`PathOptions`/`Path` 컴포저블에 `patternImage: OverlayImage?` 추가. 경로 위에 진행 방향으로 회전하며 반복되는 패턴 이미지를 표시합니다(네이버지도 앱 길찾기 화살표 스타일). Android는 네이티브 `patternImage`, iOS는 `patternIcon`에 바인딩되며, `patternInterval`과 함께 사용합니다.
+- **createDirectionArrowOverlayImage(widthDp, heightDp, color)**: 경로 패턴용 진행 방향 화살표(chevron)를 에셋 없이 코드로 그려 `OverlayImage`로 반환하는 함수 추가(Android/iOS). 크기는 dp 기준으로 양 플랫폼 동일하게 렌더링됩니다.
+
 ## [1.1.0]
 
 ### Fixed (버그 수정)

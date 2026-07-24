@@ -71,6 +71,12 @@ actual class PathOverlay(
             nativePathOverlay.patternInterval = value.toULong()
         }
 
+    actual var patternImage: OverlayImage? = null
+        set(value) {
+            field = value
+            nativePathOverlay.patternIcon = value?.nativeImage
+        }
+
     actual var isHideCollidedSymbols: Boolean
         get() = nativePathOverlay.isHideCollidedSymbols
         set(value) {
@@ -131,6 +137,7 @@ actual class PathOverlay(
         if (prev == null || prev.passedOutlineColor != options.passedOutlineColor) passedOutlineColor = options.passedOutlineColor
         if (prev == null || prev.progress != options.progress) progress = options.progress
         if (prev == null || prev.patternInterval != options.patternInterval) patternInterval = options.patternInterval
+        if (prev == null || prev.patternImage != options.patternImage) patternImage = options.patternImage
         if (prev == null || prev.isHideCollidedSymbols != options.isHideCollidedSymbols) isHideCollidedSymbols = options.isHideCollidedSymbols
         if (prev == null || prev.isHideCollidedMarkers != options.isHideCollidedMarkers) isHideCollidedMarkers = options.isHideCollidedMarkers
         if (prev == null || prev.isHideCollidedCaptions != options.isHideCollidedCaptions) isHideCollidedCaptions = options.isHideCollidedCaptions

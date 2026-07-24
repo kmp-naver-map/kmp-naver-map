@@ -86,6 +86,20 @@ expect suspend fun downloadRoundOverlayImageFromUrl(
 ): OverlayImage?
 
 /**
+ * 경로(PathOverlay) 패턴용 진행 방향 화살표 [OverlayImage]를 생성합니다.
+ * 위쪽(진행 방향)을 가리키는 화살표를 그리며, 지도 SDK가 경로 방향에 맞춰 회전시킵니다.
+ *
+ * @param widthDp  화살표 너비 (dp)
+ * @param heightDp 화살표 높이 (dp)
+ * @param color    화살표 색상 ARGB (기본 흰색)
+ */
+expect fun createDirectionArrowOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int = 0xFFFFFFFF.toInt(),
+): OverlayImage?
+
+/**
  * teardrop 마커의 꼬리 끝이 지도 좌표를 정확히 가리키도록
  * shadow 패딩을 반영한 [Anchor] 값을 반환합니다.
  *

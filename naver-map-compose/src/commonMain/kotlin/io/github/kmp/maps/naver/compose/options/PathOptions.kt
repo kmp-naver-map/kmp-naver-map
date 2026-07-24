@@ -2,6 +2,7 @@ package io.github.kmp.maps.naver.compose.options
 
 import io.github.kmp.maps.naver.compose.model.LatLng
 import io.github.kmp.maps.naver.compose.overlay.OverlayDefaults
+import io.github.kmp.maps.naver.compose.overlay.OverlayImage
 
 /**
  * 경로 오버레이(PathOverlay)를 설정하기 위한 옵션 데이터 클래스입니다.
@@ -19,6 +20,7 @@ data class PathOptions(
     val passedOutlineColor: Int = OverlayDefaults.DEFAULT_PASSED_OUTLINE_COLOR,
     val progress: Double = 0.0,           // 진행률 (0.0 ~ 1.0)
     val patternInterval: Float = 0f,      // 패턴 간격 (0이면 없음)
+    val patternImage: OverlayImage? = null, // 경로 위에 반복 표시할 패턴 이미지 (진행 방향으로 회전됨)
     val isHideCollidedSymbols: Boolean = false, // 심볼과 겹칠 때 숨김 여부
     val isHideCollidedMarkers: Boolean = false, // 마커와 겹칠 때 숨김 여부
     val isHideCollidedCaptions: Boolean = false, // 캡션과 겹칠 때 숨김 여부
