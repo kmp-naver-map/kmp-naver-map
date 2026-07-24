@@ -338,9 +338,8 @@ actual fun createDirectionArrowOverlayImage(
 }
 
 /**
- * 경로 패턴용 발자국 한 쌍을 그립니다.
- * 왼발(아래)·오른발(위)이 진행 방향(위쪽)으로 걸어가는 모양으로,
- * 발바닥(타원) + 발가락(원)을 살짝 바깥으로 벌어지게 회전시켜 그립니다.
+ * 경로 패턴용 발자국(한 발)을 그립니다.
+ * 발바닥(타원) + 발가락(원)이 진행 방향(위쪽)을 향하도록 중앙에 크게 그립니다.
  */
 actual fun createFootprintOverlayImage(
     widthDp: Float,
@@ -355,18 +354,13 @@ actual fun createFootprintOverlayImage(
         this.color = color
         style = android.graphics.Paint.Style.FILL
     }
-    val footW = w * 0.34f
-    val footH = h * 0.36f
-    val toeR = w * 0.115f
-    fun drawFoot(cx: Float, cy: Float, angleDeg: Float) {
-        canvas.save()
-        canvas.rotate(angleDeg, cx, cy)
-        canvas.drawOval(cx - footW / 2f, cy - footH / 2f, cx + footW / 2f, cy + footH / 2f, paint)
-        canvas.drawCircle(cx, cy - footH / 2f - toeR * 1.15f, toeR, paint)
-        canvas.restore()
-    }
-    drawFoot(w * 0.28f, h * 0.70f, -14f) // 왼발 (아래)
-    drawFoot(w * 0.72f, h * 0.36f, 14f)  // 오른발 (위)
+    val cx = w / 2f
+    val toeR = w * 0.24f
+    val footW = w * 0.68f
+    val footH = h - (toeR * 2f + h * 0.06f) // 발가락 + 간격을 뺀 나머지가 발바닥
+    val soleTop = toeR * 2f + h * 0.06f
+    canvas.drawCircle(cx, toeR, toeR, paint) // 발가락 (진행 방향 쪽)
+    canvas.drawOval(cx - footW / 2f, soleTop, cx + footW / 2f, soleTop + footH, paint)
     OverlayImage.fromBitmap(bitmap)
 } catch (_: Throwable) {
     null

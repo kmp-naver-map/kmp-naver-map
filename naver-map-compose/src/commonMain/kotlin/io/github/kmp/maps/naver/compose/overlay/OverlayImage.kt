@@ -103,9 +103,10 @@ expect fun createDirectionArrowOverlayImage(
 ): OverlayImage?
 
 /**
- * 경로(PathOverlay) 패턴용 발자국 한 쌍 [OverlayImage]를 생성합니다.
- * 왼발(아래)·오른발(위)이 진행 방향(위쪽)으로 걸어가는 모양으로,
+ * 경로(PathOverlay) 패턴용 발자국 [OverlayImage]를 생성합니다.
+ * 발바닥(타원) + 발가락(원) 한 발이 진행 방향(위쪽)을 향하는 모양으로,
  * 도보 경로를 직관적으로 표현할 때 사용합니다.
+ * 지도 SDK가 경로 방향에 맞춰 자동으로 회전시킵니다.
  *
  * @param widthDp  이미지 너비 (dp)
  * @param heightDp 이미지 높이 (dp)

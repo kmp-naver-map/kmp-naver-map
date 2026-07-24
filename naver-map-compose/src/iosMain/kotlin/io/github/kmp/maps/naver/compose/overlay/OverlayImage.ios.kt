@@ -407,9 +407,8 @@ actual fun createDirectionArrowOverlayImage(
 }
 
 /**
- * 경로 패턴용 발자국 한 쌍을 그립니다.
- * 왼발(아래)·오른발(위)이 진행 방향(위쪽)으로 걸어가는 모양으로,
- * 발바닥(타원) + 발가락(원)을 살짝 바깥으로 벌어지게 회전시켜 그립니다.
+ * 경로 패턴용 발자국(한 발)을 그립니다.
+ * 발바닥(타원) + 발가락(원)이 진행 방향(위쪽)을 향하도록 중앙에 크게 그립니다.
  * dp를 포인트로 그대로 사용합니다(iOS 1pt = 1dp).
  */
 actual fun createFootprintOverlayImage(
@@ -420,28 +419,18 @@ actual fun createFootprintOverlayImage(
     val w = widthDp.toDouble().coerceAtLeast(4.0)
     val h = heightDp.toDouble().coerceAtLeast(4.0)
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(w, h), false, 0.0)
-    val footW = w * 0.34
-    val footH = h * 0.36
-    val toeR = w * 0.115
     color.toUIColor().setFill()
-    fun drawFoot(cx: Double, cy: Double, angleDeg: Double) {
-        val path = UIBezierPath.bezierPathWithOvalInRect(
-            CGRectMake(cx - footW / 2.0, cy - footH / 2.0, footW, footH)
-        )
-        val toeCy = cy - footH / 2.0 - toeR * 1.15
-        path.appendPath(
-            UIBezierPath.bezierPathWithOvalInRect(
-                CGRectMake(cx - toeR, toeCy - toeR, toeR * 2.0, toeR * 2.0)
-            )
-        )
-        var t = platform.CoreGraphics.CGAffineTransformMakeTranslation(cx, cy)
-        t = platform.CoreGraphics.CGAffineTransformRotate(t, angleDeg * PI / 180.0)
-        t = platform.CoreGraphics.CGAffineTransformTranslate(t, -cx, -cy)
-        path.applyTransform(t)
-        path.fill()
-    }
-    drawFoot(w * 0.28, h * 0.70, -14.0) // 왼발 (아래)
-    drawFoot(w * 0.72, h * 0.36, 14.0)  // 오른발 (위)
+    val cx = w / 2.0
+    val toeR = w * 0.24
+    val footW = w * 0.68
+    val soleTop = toeR * 2.0 + h * 0.06
+    val footH = h - soleTop // 발가락 + 간격을 뺀 나머지가 발바닥
+    UIBezierPath.bezierPathWithOvalInRect(
+        CGRectMake(cx - toeR, 0.0, toeR * 2.0, toeR * 2.0) // 발가락 (진행 방향 쪽)
+    ).fill()
+    UIBezierPath.bezierPathWithOvalInRect(
+        CGRectMake(cx - footW / 2.0, soleTop, footW, footH)
+    ).fill()
     val image = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
     return image?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }
