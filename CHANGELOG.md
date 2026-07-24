@@ -2,6 +2,12 @@
 
 이 프로젝트의 주요 변경 사항을 기록합니다. / Notable changes to this project.
 
+## [1.2.1]
+
+### Added (기능 추가)
+- **createDirectionArrowOverlayImage strokeWidthDp**: 화살표 함수에 `strokeWidthDp` 파라미터 추가. 0(기본)이면 기존과 동일한 꽉 찬 chevron 삼각형, 0보다 크면 해당 굵기(dp)의 열린 꺾쇠(˄) 스트로크로 그립니다.
+- **createFootprintOverlayImage(widthDp, heightDp, color)**: 경로 패턴용 발자국 한 쌍(왼발 아래·오른발 위, 발바닥 타원+발가락 원)을 코드로 그려 반환하는 함수 추가(Android/iOS). 도보 경로를 걸어가는 발자국으로 표현할 때 `patternImage`와 함께 사용합니다.
+
 ## [1.2.0]
 
 ### Added (기능 추가)

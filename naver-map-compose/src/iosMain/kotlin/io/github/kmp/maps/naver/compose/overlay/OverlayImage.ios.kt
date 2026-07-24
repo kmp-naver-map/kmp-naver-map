@@ -366,26 +366,82 @@ actual fun rememberOverlayImage(
 
 /**
  * 경로 패턴용 진행 방향 화살표를 그립니다.
- * 위쪽을 가리키는 chevron 형태(밑변 중앙이 살짝 파인 삼각형)로,
- * 네이버 지도 앱의 길찾기 경로 화살표와 유사한 모양입니다.
+ * strokeWidthDp가 0이면 밑변 중앙이 파인 꽉 찬 chevron 삼각형,
+ * 0보다 크면 열린 꺾쇠(˄) 스트로크로 그립니다.
  * dp를 포인트로 그대로 사용합니다(iOS 1pt = 1dp).
  */
 actual fun createDirectionArrowOverlayImage(
     widthDp: Float,
     heightDp: Float,
     color: Int,
+    strokeWidthDp: Float,
 ): OverlayImage? {
     val w = widthDp.toDouble().coerceAtLeast(2.0)
     val h = heightDp.toDouble().coerceAtLeast(2.0)
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(w, h), false, 0.0)
-    val path = UIBezierPath.bezierPath()
-    path.moveToPoint(CGPointMake(w / 2.0, 0.0))          // 꼭짓점 (진행 방향)
-    path.addLineToPoint(CGPointMake(w, h))
-    path.addLineToPoint(CGPointMake(w / 2.0, h * 0.72))  // 밑변 중앙 파임 (chevron)
-    path.addLineToPoint(CGPointMake(0.0, h))
-    path.closePath()
+    if (strokeWidthDp > 0f) {
+        val stroke = strokeWidthDp.toDouble()
+        val half = stroke / 2.0
+        val path = UIBezierPath.bezierPath()
+        path.moveToPoint(CGPointMake(half, h - half))
+        path.addLineToPoint(CGPointMake(w / 2.0, half))      // 꼭짓점 (진행 방향)
+        path.addLineToPoint(CGPointMake(w - half, h - half))
+        path.lineWidth = stroke
+        path.lineCapStyle = platform.CoreGraphics.CGLineCap.kCGLineCapRound
+        path.lineJoinStyle = platform.CoreGraphics.CGLineJoin.kCGLineJoinRound
+        color.toUIColor().setStroke()
+        path.stroke()
+    } else {
+        val path = UIBezierPath.bezierPath()
+        path.moveToPoint(CGPointMake(w / 2.0, 0.0))          // 꼭짓점 (진행 방향)
+        path.addLineToPoint(CGPointMake(w, h))
+        path.addLineToPoint(CGPointMake(w / 2.0, h * 0.72))  // 밑변 중앙 파임 (chevron)
+        path.addLineToPoint(CGPointMake(0.0, h))
+        path.closePath()
+        color.toUIColor().setFill()
+        path.fill()
+    }
+    val image = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return image?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }
+}
+
+/**
+ * 경로 패턴용 발자국 한 쌍을 그립니다.
+ * 왼발(아래)·오른발(위)이 진행 방향(위쪽)으로 걸어가는 모양으로,
+ * 발바닥(타원) + 발가락(원)을 살짝 바깥으로 벌어지게 회전시켜 그립니다.
+ * dp를 포인트로 그대로 사용합니다(iOS 1pt = 1dp).
+ */
+actual fun createFootprintOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int,
+): OverlayImage? {
+    val w = widthDp.toDouble().coerceAtLeast(4.0)
+    val h = heightDp.toDouble().coerceAtLeast(4.0)
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(w, h), false, 0.0)
+    val footW = w * 0.34
+    val footH = h * 0.36
+    val toeR = w * 0.115
     color.toUIColor().setFill()
-    path.fill()
+    fun drawFoot(cx: Double, cy: Double, angleDeg: Double) {
+        val path = UIBezierPath.bezierPathWithOvalInRect(
+            CGRectMake(cx - footW / 2.0, cy - footH / 2.0, footW, footH)
+        )
+        val toeCy = cy - footH / 2.0 - toeR * 1.15
+        path.appendPath(
+            UIBezierPath.bezierPathWithOvalInRect(
+                CGRectMake(cx - toeR, toeCy - toeR, toeR * 2.0, toeR * 2.0)
+            )
+        )
+        var t = platform.CoreGraphics.CGAffineTransformMakeTranslation(cx, cy)
+        t = platform.CoreGraphics.CGAffineTransformRotate(t, angleDeg * PI / 180.0)
+        t = platform.CoreGraphics.CGAffineTransformTranslate(t, -cx, -cy)
+        path.applyTransform(t)
+        path.fill()
+    }
+    drawFoot(w * 0.28, h * 0.70, -14.0) // 왼발 (아래)
+    drawFoot(w * 0.72, h * 0.36, 14.0)  // 오른발 (위)
     val image = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
     return image?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }

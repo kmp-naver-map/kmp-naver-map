@@ -289,30 +289,84 @@ actual fun rememberOverlayImage(
 
 /**
  * 경로 패턴용 진행 방향 화살표를 그립니다.
- * 위쪽을 가리키는 chevron 형태(밑변 중앙이 살짝 파인 삼각형)로,
- * 네이버 지도 앱의 길찾기 경로 화살표와 유사한 모양입니다.
+ * strokeWidthDp가 0이면 밑변 중앙이 파인 꽉 찬 chevron 삼각형,
+ * 0보다 크면 열린 꺾쇠(˄) 스트로크로 그립니다.
  */
 actual fun createDirectionArrowOverlayImage(
     widthDp: Float,
     heightDp: Float,
     color: Int,
+    strokeWidthDp: Float,
 ): OverlayImage? = try {
     val w = widthDp.dpToPx().toInt().coerceAtLeast(2)
     val h = heightDp.dpToPx().toInt().coerceAtLeast(2)
+    val bitmap = createBitmap(w, h)
+    val canvas = android.graphics.Canvas(bitmap)
+    val strokePx = strokeWidthDp.dpToPx()
+    if (strokePx > 0f) {
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = color
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = strokePx
+            strokeCap = android.graphics.Paint.Cap.ROUND
+            strokeJoin = android.graphics.Paint.Join.ROUND
+        }
+        val half = strokePx / 2f
+        val path = android.graphics.Path().apply {
+            moveTo(half, h - half)
+            lineTo(w / 2f, half)        // 꼭짓점 (진행 방향)
+            lineTo(w - half, h - half)
+        }
+        canvas.drawPath(path, paint)
+    } else {
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            this.color = color
+            style = android.graphics.Paint.Style.FILL
+        }
+        val path = android.graphics.Path().apply {
+            moveTo(w / 2f, 0f)          // 꼭짓점 (진행 방향)
+            lineTo(w.toFloat(), h.toFloat())
+            lineTo(w / 2f, h * 0.72f)   // 밑변 중앙 파임 (chevron)
+            lineTo(0f, h.toFloat())
+            close()
+        }
+        canvas.drawPath(path, paint)
+    }
+    OverlayImage.fromBitmap(bitmap)
+} catch (_: Throwable) {
+    null
+}
+
+/**
+ * 경로 패턴용 발자국 한 쌍을 그립니다.
+ * 왼발(아래)·오른발(위)이 진행 방향(위쪽)으로 걸어가는 모양으로,
+ * 발바닥(타원) + 발가락(원)을 살짝 바깥으로 벌어지게 회전시켜 그립니다.
+ */
+actual fun createFootprintOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int,
+): OverlayImage? = try {
+    val w = widthDp.dpToPx().toInt().coerceAtLeast(4)
+    val h = heightDp.dpToPx().toInt().coerceAtLeast(4)
     val bitmap = createBitmap(w, h)
     val canvas = android.graphics.Canvas(bitmap)
     val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         this.color = color
         style = android.graphics.Paint.Style.FILL
     }
-    val path = android.graphics.Path().apply {
-        moveTo(w / 2f, 0f)          // 꼭짓점 (진행 방향)
-        lineTo(w.toFloat(), h.toFloat())
-        lineTo(w / 2f, h * 0.72f)   // 밑변 중앙 파임 (chevron)
-        lineTo(0f, h.toFloat())
-        close()
+    val footW = w * 0.34f
+    val footH = h * 0.36f
+    val toeR = w * 0.115f
+    fun drawFoot(cx: Float, cy: Float, angleDeg: Float) {
+        canvas.save()
+        canvas.rotate(angleDeg, cx, cy)
+        canvas.drawOval(cx - footW / 2f, cy - footH / 2f, cx + footW / 2f, cy + footH / 2f, paint)
+        canvas.drawCircle(cx, cy - footH / 2f - toeR * 1.15f, toeR, paint)
+        canvas.restore()
     }
-    canvas.drawPath(path, paint)
+    drawFoot(w * 0.28f, h * 0.70f, -14f) // 왼발 (아래)
+    drawFoot(w * 0.72f, h * 0.36f, 14f)  // 오른발 (위)
     OverlayImage.fromBitmap(bitmap)
 } catch (_: Throwable) {
     null

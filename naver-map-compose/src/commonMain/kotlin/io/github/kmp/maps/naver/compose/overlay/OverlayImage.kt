@@ -89,11 +89,29 @@ expect suspend fun downloadRoundOverlayImageFromUrl(
  * 경로(PathOverlay) 패턴용 진행 방향 화살표 [OverlayImage]를 생성합니다.
  * 위쪽(진행 방향)을 가리키는 화살표를 그리며, 지도 SDK가 경로 방향에 맞춰 회전시킵니다.
  *
- * @param widthDp  화살표 너비 (dp)
- * @param heightDp 화살표 높이 (dp)
- * @param color    화살표 색상 ARGB (기본 흰색)
+ * @param widthDp       화살표 너비 (dp)
+ * @param heightDp      화살표 높이 (dp)
+ * @param color         화살표 색상 ARGB (기본 흰색)
+ * @param strokeWidthDp 0이면 꽉 찬 chevron 삼각형, 0보다 크면 해당 굵기(dp)의
+ *                      열린 꺾쇠(˄) 스트로크로 그립니다.
  */
 expect fun createDirectionArrowOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int = 0xFFFFFFFF.toInt(),
+    strokeWidthDp: Float = 0f,
+): OverlayImage?
+
+/**
+ * 경로(PathOverlay) 패턴용 발자국 한 쌍 [OverlayImage]를 생성합니다.
+ * 왼발(아래)·오른발(위)이 진행 방향(위쪽)으로 걸어가는 모양으로,
+ * 도보 경로를 직관적으로 표현할 때 사용합니다.
+ *
+ * @param widthDp  이미지 너비 (dp)
+ * @param heightDp 이미지 높이 (dp)
+ * @param color    발자국 색상 ARGB (기본 흰색)
+ */
+expect fun createFootprintOverlayImage(
     widthDp: Float,
     heightDp: Float,
     color: Int = 0xFFFFFFFF.toInt(),
