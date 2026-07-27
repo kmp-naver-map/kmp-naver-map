@@ -22,8 +22,10 @@ import platform.CoreGraphics.CGContextBeginTransparencyLayer
 import platform.CoreGraphics.CGContextClip
 import platform.CoreGraphics.CGContextEndTransparencyLayer
 import platform.CoreGraphics.CGContextRestoreGState
+import platform.CoreGraphics.CGContextRotateCTM
 import platform.CoreGraphics.CGContextSaveGState
 import platform.CoreGraphics.CGContextSetShadowWithColor
+import platform.CoreGraphics.CGContextTranslateCTM
 import platform.CoreGraphics.CGPointMake
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSizeMake
@@ -407,8 +409,9 @@ actual fun createDirectionArrowOverlayImage(
 }
 
 /**
- * 경로 패턴용 발자국(한 발)을 그립니다.
- * 발바닥(타원) + 발가락(원)이 진행 방향(위쪽)을 향하도록 중앙에 크게 그립니다.
+ * 경로 패턴용 사람 발자국을 그립니다.
+ * 신발 자국 두 개를 가로 중앙에 놓고 기울기만 ±8°로 번갈아 주어,
+ * 경로선을 얇게 유지하면서도 한 발씩 내딛는 걸음 리듬을 표현합니다.
  * dp를 포인트로 그대로 사용합니다(iOS 1pt = 1dp).
  */
 actual fun createFootprintOverlayImage(
@@ -419,18 +422,176 @@ actual fun createFootprintOverlayImage(
     val w = widthDp.toDouble().coerceAtLeast(4.0)
     val h = heightDp.toDouble().coerceAtLeast(4.0)
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(w, h), false, 0.0)
+    val ctx = UIGraphicsGetCurrentContext()
     color.toUIColor().setFill()
-    val cx = w / 2.0
-    val toeR = w * 0.24
-    val footW = w * 0.68
-    val soleTop = toeR * 2.0 + h * 0.06
-    val footH = h - soleTop // 발가락 + 간격을 뺀 나머지가 발바닥
-    UIBezierPath.bezierPathWithOvalInRect(
-        CGRectMake(cx - toeR, 0.0, toeR * 2.0, toeR * 2.0) // 발가락 (진행 방향 쪽)
-    ).fill()
-    UIBezierPath.bezierPathWithOvalInRect(
-        CGRectMake(cx - footW / 2.0, soleTop, footW, footH)
-    ).fill()
+    // 신발 자국 한 짝(앞창 + 뒤굽 분리)을 cy 높이에 degrees만큼 기울여 그린다.
+    // 크기는 이미지 "너비"에서만 정해지므로 heightDp는 걸음 간격만 조절한다.
+    fun shoe(cy: Double, degrees: Double) {
+        var shoeW = w * 0.737            // 8° 기울여도 좌우가 잘리지 않는 최대 폭
+        var shoeH = shoeW * 2.63         // 실제 구두 비율(가로:세로 ≈ 0.38:1)
+        // heightDp가 권장 최소치보다 작으면 자국이 이미지 위아래로 잘린다.
+        // 잘리는 대신 자국을 줄여 형태를 온전히 유지한다.
+        val halfBound = (shoeH * COS8 + shoeW * SIN8) / 2.0
+        val slot = h * PATTERN_FOOT_OFFSET.toDouble()
+        if (halfBound > slot) {
+            val fit = slot / halfBound
+            shoeW *= fit
+            shoeH *= fit
+        }
+        CGContextSaveGState(ctx)
+        CGContextTranslateCTM(ctx, w / 2.0, cy)
+        CGContextRotateCTM(ctx, degrees * kotlin.math.PI / 180.0)
+        CGContextTranslateCTM(ctx, -shoeW / 2.0, -shoeH / 2.0)
+        // 앞창: 신발 폭을 꽉 채우는 세로로 긴 타원 (전체 길이의 60%까지)
+        val front = UIBezierPath.bezierPath()
+        front.moveToPoint(CGPointMake(shoeW * 0.50, shoeH * 0.01))
+        front.addCurveToPoint(
+            CGPointMake(shoeW * 1.00, shoeH * 0.30),
+            controlPoint1 = CGPointMake(shoeW * 0.84, shoeH * 0.01),
+            controlPoint2 = CGPointMake(shoeW * 1.00, shoeH * 0.13),
+        )
+        front.addCurveToPoint(
+            CGPointMake(shoeW * 0.70, shoeH * 0.60),
+            controlPoint1 = CGPointMake(shoeW * 1.00, shoeH * 0.46),
+            controlPoint2 = CGPointMake(shoeW * 0.88, shoeH * 0.58),
+        )
+        front.addCurveToPoint(
+            CGPointMake(shoeW * 0.30, shoeH * 0.60),
+            controlPoint1 = CGPointMake(shoeW * 0.58, shoeH * 0.615),
+            controlPoint2 = CGPointMake(shoeW * 0.42, shoeH * 0.615),
+        )
+        front.addCurveToPoint(
+            CGPointMake(shoeW * 0.00, shoeH * 0.30),
+            controlPoint1 = CGPointMake(shoeW * 0.12, shoeH * 0.58),
+            controlPoint2 = CGPointMake(shoeW * 0.00, shoeH * 0.46),
+        )
+        front.addCurveToPoint(
+            CGPointMake(shoeW * 0.50, shoeH * 0.01),
+            controlPoint1 = CGPointMake(shoeW * 0.00, shoeH * 0.13),
+            controlPoint2 = CGPointMake(shoeW * 0.16, shoeH * 0.01),
+        )
+        front.closePath()
+        front.fill()
+        // 뒤굽: 앞창과 떨어진 둥근 사각형
+        val heel = UIBezierPath.bezierPath()
+        heel.moveToPoint(CGPointMake(shoeW * 0.50, shoeH * 0.71))
+        heel.addCurveToPoint(
+            CGPointMake(shoeW * 0.85, shoeH * 0.87),
+            controlPoint1 = CGPointMake(shoeW * 0.74, shoeH * 0.71),
+            controlPoint2 = CGPointMake(shoeW * 0.86, shoeH * 0.79),
+        )
+        heel.addCurveToPoint(
+            CGPointMake(shoeW * 0.50, shoeH * 1.00),
+            controlPoint1 = CGPointMake(shoeW * 0.85, shoeH * 0.96),
+            controlPoint2 = CGPointMake(shoeW * 0.70, shoeH * 1.00),
+        )
+        heel.addCurveToPoint(
+            CGPointMake(shoeW * 0.15, shoeH * 0.87),
+            controlPoint1 = CGPointMake(shoeW * 0.30, shoeH * 1.00),
+            controlPoint2 = CGPointMake(shoeW * 0.15, shoeH * 0.96),
+        )
+        heel.addCurveToPoint(
+            CGPointMake(shoeW * 0.50, shoeH * 0.71),
+            controlPoint1 = CGPointMake(shoeW * 0.14, shoeH * 0.79),
+            controlPoint2 = CGPointMake(shoeW * 0.26, shoeH * 0.71),
+        )
+        heel.closePath()
+        heel.fill()
+        CGContextRestoreGState(ctx)
+    }
+    // 두 발 위치는 SDK의 높이 축소를 상쇄하도록 계산된 값(≈18.3% / 81.7%).
+    // 유도 과정은 PATTERN_FOOT_OFFSET 주석 참고.
+    shoe(h * PATTERN_FOOT_OFFSET.toDouble(), 8.0)
+    shoe(h * (1.0 - PATTERN_FOOT_OFFSET.toDouble()), -8.0)
+    val image = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return image?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }
+}
+
+/**
+ * 경로 패턴용 동물 발바닥을 그립니다.
+ * 발바닥 두 개를 가로 중앙에 놓고 기울기만 ±8°로 번갈아 주어,
+ * 경로선을 얇게 유지하면서도 한 발씩 내딛는 걸음 리듬을 표현합니다.
+ * dp를 포인트로 그대로 사용합니다(iOS 1pt = 1dp).
+ */
+actual fun createPawprintOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int,
+): OverlayImage? {
+    val w = widthDp.toDouble().coerceAtLeast(4.0)
+    val h = heightDp.toDouble().coerceAtLeast(4.0)
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(w, h), false, 0.0)
+    val ctx = UIGraphicsGetCurrentContext()
+    color.toUIColor().setFill()
+    // 발바닥 한 개를 cy 높이에 degrees만큼 기울여 그린다.
+    // 크기는 이미지 "너비"에서만 정해지므로 heightDp는 걸음 간격만 조절한다.
+    fun paw(cy: Double, degrees: Double) {
+        var pawW = w * 0.874             // 12° 기울여도 좌우가 잘리지 않는 최대 폭
+        var pawH = pawW * 0.80           // 발바닥은 가로가 넓다
+        // heightDp가 권장 최소치보다 작으면 자국이 이미지 위아래로 잘린다.
+        // 잘리는 대신 자국을 줄여 형태를 온전히 유지한다.
+        val halfBound = (pawH * COS12 + pawW * SIN12) / 2.0
+        val slot = h * PATTERN_FOOT_OFFSET.toDouble()
+        if (halfBound > slot) {
+            val fit = slot / halfBound
+            pawW *= fit
+            pawH *= fit
+        }
+        CGContextSaveGState(ctx)
+        CGContextTranslateCTM(ctx, w / 2.0, cy)
+        CGContextRotateCTM(ctx, degrees * kotlin.math.PI / 180.0)
+        CGContextTranslateCTM(ctx, -pawW / 2.0, -pawH / 2.0)
+        fun toe(tx: Double, ty: Double, rx: Double, ry: Double, deg: Double) {
+            CGContextSaveGState(ctx)
+            CGContextTranslateCTM(ctx, tx, ty)
+            CGContextRotateCTM(ctx, deg * kotlin.math.PI / 180.0)
+            UIBezierPath.bezierPathWithOvalInRect(CGRectMake(-rx, -ry, rx * 2.0, ry * 2.0)).fill()
+            CGContextRestoreGState(ctx)
+        }
+        toe(pawW * 0.330, pawH * 0.185, pawW * 0.130, pawH * 0.180, -8.0)
+        toe(pawW * 0.670, pawH * 0.185, pawW * 0.130, pawH * 0.180, 8.0)
+        toe(pawW * 0.130, pawH * 0.420, pawW * 0.115, pawH * 0.155, -32.0)
+        toe(pawW * 0.870, pawH * 0.420, pawW * 0.115, pawH * 0.155, 32.0)
+        val pad = UIBezierPath.bezierPath()
+        pad.moveToPoint(CGPointMake(pawW * 0.500, pawH * 0.460))
+        pad.addCurveToPoint(
+            CGPointMake(pawW * 0.716, pawH * 0.585),
+            controlPoint1 = CGPointMake(pawW * 0.596, pawH * 0.460),
+            controlPoint2 = CGPointMake(pawW * 0.668, pawH * 0.507),
+        )
+        pad.addCurveToPoint(
+            CGPointMake(pawW * 0.770, pawH * 0.876),
+            controlPoint1 = CGPointMake(pawW * 0.770, pawH * 0.668),
+            controlPoint2 = CGPointMake(pawW * 0.800, pawH * 0.782),
+        )
+        pad.addCurveToPoint(
+            CGPointMake(pawW * 0.500, pawH * 0.980),
+            controlPoint1 = CGPointMake(pawW * 0.740, pawH * 0.954),
+            controlPoint2 = CGPointMake(pawW * 0.644, pawH * 0.980),
+        )
+        pad.addCurveToPoint(
+            CGPointMake(pawW * 0.230, pawH * 0.876),
+            controlPoint1 = CGPointMake(pawW * 0.356, pawH * 0.980),
+            controlPoint2 = CGPointMake(pawW * 0.260, pawH * 0.954),
+        )
+        pad.addCurveToPoint(
+            CGPointMake(pawW * 0.284, pawH * 0.585),
+            controlPoint1 = CGPointMake(pawW * 0.200, pawH * 0.782),
+            controlPoint2 = CGPointMake(pawW * 0.230, pawH * 0.668),
+        )
+        pad.addCurveToPoint(
+            CGPointMake(pawW * 0.500, pawH * 0.460),
+            controlPoint1 = CGPointMake(pawW * 0.332, pawH * 0.507),
+            controlPoint2 = CGPointMake(pawW * 0.404, pawH * 0.460),
+        )
+        pad.closePath()
+        pad.fill()
+        CGContextRestoreGState(ctx)
+    }
+    // 두 발 위치는 위 발자국과 동일한 보정(PATTERN_FOOT_OFFSET).
+    paw(h * PATTERN_FOOT_OFFSET.toDouble(), 12.0)
+    paw(h * (1.0 - PATTERN_FOOT_OFFSET.toDouble()), -12.0)
     val image = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
     return image?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }

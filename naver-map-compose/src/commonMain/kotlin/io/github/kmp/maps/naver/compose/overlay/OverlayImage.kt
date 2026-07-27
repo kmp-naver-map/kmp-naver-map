@@ -103,16 +103,83 @@ expect fun createDirectionArrowOverlayImage(
 ): OverlayImage?
 
 /**
+ * 네이버 지도가 패턴 이미지를 그릴 때 **높이에만** 적용하는 축소 비율입니다.
+ * (너비는 경로선 두께에 맞춰지고, 가로세로 비율은 보존되지 않습니다.)
+ *
+ * 실측값 — Android 에뮬레이터에서 화면 밀도 320/390/480/560dpi, 경로선 두께 12/16/20dp,
+ * 이미지 높이 24/30/36/40dp 조합으로 0.784~0.793 (평균 0.788, 편차 0.5%),
+ * iOS 시뮬레이터(iPhone 17 Pro)에서 0.7877로 측정되었습니다.
+ * 즉 플랫폼·밀도·선 두께·이미지 높이와 무관한 SDK 공통 상수입니다.
+ */
+internal const val PATTERN_IMAGE_HEIGHT_SCALE = 0.788f
+
+/**
+ * 두 발을 이미지 높이의 [PATTERN_FOOT_OFFSET] / (1 - [PATTERN_FOOT_OFFSET]) 지점에 두면
+ * [PATTERN_IMAGE_HEIGHT_SCALE] 축소가 상쇄되어 걸음 간격이 균일해집니다.
+ *
+ * 유도: 이미지 높이를 H, 축소율을 k라 할 때
+ *  - 이미지 안 두 발 간격(축소 후) = (1 - 2f) * H * k
+ *  - 다음 이미지까지의 간격       = patternInterval - (1 - 2f) * H * k
+ * patternInterval == H 이므로 두 값이 같으려면
+ *  (1 - 2f) * H * k = H / 2  →  f = (1 - 1/(2k)) / 2  ≈ 0.183
+ *
+ * 이때 걸음 간격은 k와 무관하게 항상 `heightDp / 2`가 됩니다.
+ */
+internal val PATTERN_FOOT_OFFSET = (1f - 1f / (2f * PATTERN_IMAGE_HEIGHT_SCALE)) / 2f
+
+/** 자국 기울기(발자국 8°, 발바닥 12°)의 삼각비. 잘림 방지 축소 계산에 사용합니다. */
+internal const val COS8 = 0.99027f
+internal const val SIN8 = 0.13917f
+internal const val COS12 = 0.97815f
+internal const val SIN12 = 0.20791f
+
+/**
  * 경로(PathOverlay) 패턴용 발자국 [OverlayImage]를 생성합니다.
- * 발바닥(타원) + 발가락(원) 한 발이 진행 방향(위쪽)을 향하는 모양으로,
- * 도보 경로를 직관적으로 표현할 때 사용합니다.
+ * 앞창과 뒤굽이 분리된 구두 자국 두 개가 ±8°로 번갈아 기울어져,
+ * 실제로 걷는 듯한 좌우 리듬을 줍니다.
  * 지도 SDK가 경로 방향에 맞춰 자동으로 회전시킵니다.
  *
- * @param widthDp  이미지 너비 (dp)
- * @param heightDp 이미지 높이 (dp)
+ * 자국 크기는 [widthDp](=선 두께)에서만 정해지고, [heightDp]는 걸음 간격만
+ * 조절합니다. 걸음 간격은 `heightDp / 2`이며 [heightDp]는 [widthDp]의
+ * 5.6배 이상이어야 자국이 온전히 그려집니다.
+ * (그보다 작으면 잘리는 대신 자국이 자동으로 축소됩니다.)
+ *
+ * **patternInterval은 [heightDp]와 동일하게 주세요.** 지도 SDK가 패턴 이미지의
+ * 높이만 줄여 그리는데(너비는 선 두께에 맞춤), 두 발을 [PATTERN_FOOT_OFFSET]
+ * 위치에 배치해 이 축소를 미리 보정해 두었습니다. 그래서 이 값일 때만
+ * 이미지 안 간격과 이미지 사이 간격이 모두 같아집니다.
+ *
+ * @param widthDp  이미지 너비 (dp) — 경로선 두께와 같게 주는 것을 권장
+ * @param heightDp 이미지 높이 (dp) — 너비의 5.6배 이상 (걸음 간격 = 높이의 1/2)
  * @param color    발자국 색상 ARGB (기본 흰색)
  */
 expect fun createFootprintOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int = 0xFFFFFFFF.toInt(),
+): OverlayImage?
+
+/**
+ * 경로(PathOverlay) 패턴용 동물 발바닥(paw) [OverlayImage]를 생성합니다.
+ * 발가락 4개 + 둥근 삼각형 패드로 이루어진 발바닥 두 개가 ±12°로 번갈아 기울어져,
+ * 실제로 걷는 듯한 좌우 리듬을 줍니다.
+ * 지도 SDK가 경로 방향에 맞춰 자동으로 회전시킵니다.
+ *
+ * 자국 크기는 [widthDp](=선 두께)에서만 정해지고, [heightDp]는 걸음 간격만
+ * 조절합니다. 걸음 간격은 `heightDp / 2`이며 [heightDp]는 [widthDp]의
+ * 2.4배 이상이어야 자국이 온전히 그려집니다.
+ * (그보다 작으면 잘리는 대신 자국이 자동으로 축소됩니다.)
+ *
+ * **patternInterval은 [heightDp]와 동일하게 주세요.** 지도 SDK가 패턴 이미지의
+ * 높이만 줄여 그리는데(너비는 선 두께에 맞춤), 두 발을 [PATTERN_FOOT_OFFSET]
+ * 위치에 배치해 이 축소를 미리 보정해 두었습니다. 그래서 이 값일 때만
+ * 이미지 안 간격과 이미지 사이 간격이 모두 같아집니다.
+ *
+ * @param widthDp  이미지 너비 (dp) — 경로선 두께와 같게 주는 것을 권장
+ * @param heightDp 이미지 높이 (dp) — 너비의 2.4배 이상 (걸음 간격 = 높이의 1/2)
+ * @param color    발바닥 색상 ARGB (기본 흰색)
+ */
+expect fun createPawprintOverlayImage(
     widthDp: Float,
     heightDp: Float,
     color: Int = 0xFFFFFFFF.toInt(),

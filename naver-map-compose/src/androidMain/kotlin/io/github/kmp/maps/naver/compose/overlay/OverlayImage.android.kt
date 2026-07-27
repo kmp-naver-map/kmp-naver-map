@@ -338,8 +338,9 @@ actual fun createDirectionArrowOverlayImage(
 }
 
 /**
- * 경로 패턴용 발자국(한 발)을 그립니다.
- * 발바닥(타원) + 발가락(원)이 진행 방향(위쪽)을 향하도록 중앙에 크게 그립니다.
+ * 경로 패턴용 사람 발자국을 그립니다.
+ * 신발 자국 두 개를 가로 중앙에 놓고 기울기만 ±8°로 번갈아 주어,
+ * 경로선을 얇게 유지하면서도 한 발씩 내딛는 걸음 리듬을 표현합니다.
  */
 actual fun createFootprintOverlayImage(
     widthDp: Float,
@@ -348,19 +349,126 @@ actual fun createFootprintOverlayImage(
 ): OverlayImage? = try {
     val w = widthDp.dpToPx().toInt().coerceAtLeast(4)
     val h = heightDp.dpToPx().toInt().coerceAtLeast(4)
+    val fw = w.toFloat()
+    val fh = h.toFloat()
     val bitmap = createBitmap(w, h)
     val canvas = android.graphics.Canvas(bitmap)
     val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
         this.color = color
         style = android.graphics.Paint.Style.FILL
     }
-    val cx = w / 2f
-    val toeR = w * 0.24f
-    val footW = w * 0.68f
-    val footH = h - (toeR * 2f + h * 0.06f) // 발가락 + 간격을 뺀 나머지가 발바닥
-    val soleTop = toeR * 2f + h * 0.06f
-    canvas.drawCircle(cx, toeR, toeR, paint) // 발가락 (진행 방향 쪽)
-    canvas.drawOval(cx - footW / 2f, soleTop, cx + footW / 2f, soleTop + footH, paint)
+    // 신발 자국 한 짝(앞창 + 뒤굽 분리)을 (cx, cy) 중심에 degrees만큼 기울여 그린다.
+    // 크기는 이미지 "너비"에서만 정해지므로 heightDp는 걸음 간격만 조절한다.
+    fun shoe(cy: Float, degrees: Float) {
+        var shoeW = fw * 0.737f          // 8° 기울여도 좌우가 잘리지 않는 최대 폭
+        var shoeH = shoeW * 2.63f        // 실제 구두 비율(가로:세로 ≈ 0.38:1)
+        // heightDp가 권장 최소치보다 작으면 자국이 이미지 위아래로 잘린다.
+        // 잘리는 대신 자국을 줄여 형태를 온전히 유지한다.
+        val halfBound = (shoeH * COS8 + shoeW * SIN8) / 2f
+        val slot = fh * PATTERN_FOOT_OFFSET
+        if (halfBound > slot) {
+            val fit = slot / halfBound
+            shoeW *= fit
+            shoeH *= fit
+        }
+        canvas.save()
+        canvas.rotate(degrees, fw / 2f, cy)
+        canvas.translate((fw - shoeW) / 2f, cy - shoeH / 2f)
+        // 앞창: 신발 폭을 꽉 채우는 세로로 긴 타원 (전체 길이의 60%까지)
+        val front = android.graphics.Path().apply {
+            moveTo(shoeW * 0.50f, shoeH * 0.01f)
+            cubicTo(shoeW * 0.84f, shoeH * 0.01f, shoeW * 1.00f, shoeH * 0.13f, shoeW * 1.00f, shoeH * 0.30f)
+            cubicTo(shoeW * 1.00f, shoeH * 0.46f, shoeW * 0.88f, shoeH * 0.58f, shoeW * 0.70f, shoeH * 0.60f)
+            cubicTo(shoeW * 0.58f, shoeH * 0.615f, shoeW * 0.42f, shoeH * 0.615f, shoeW * 0.30f, shoeH * 0.60f)
+            cubicTo(shoeW * 0.12f, shoeH * 0.58f, shoeW * 0.00f, shoeH * 0.46f, shoeW * 0.00f, shoeH * 0.30f)
+            cubicTo(shoeW * 0.00f, shoeH * 0.13f, shoeW * 0.16f, shoeH * 0.01f, shoeW * 0.50f, shoeH * 0.01f)
+            close()
+        }
+        canvas.drawPath(front, paint)
+        // 뒤굽: 앞창과 떨어진 둥근 사각형
+        val heel = android.graphics.Path().apply {
+            moveTo(shoeW * 0.50f, shoeH * 0.71f)
+            cubicTo(shoeW * 0.74f, shoeH * 0.71f, shoeW * 0.86f, shoeH * 0.79f, shoeW * 0.85f, shoeH * 0.87f)
+            cubicTo(shoeW * 0.85f, shoeH * 0.96f, shoeW * 0.70f, shoeH * 1.00f, shoeW * 0.50f, shoeH * 1.00f)
+            cubicTo(shoeW * 0.30f, shoeH * 1.00f, shoeW * 0.15f, shoeH * 0.96f, shoeW * 0.15f, shoeH * 0.87f)
+            cubicTo(shoeW * 0.14f, shoeH * 0.79f, shoeW * 0.26f, shoeH * 0.71f, shoeW * 0.50f, shoeH * 0.71f)
+            close()
+        }
+        canvas.drawPath(heel, paint)
+        canvas.restore()
+    }
+    // 두 발 위치는 위 발바닥과 동일한 보정(PATTERN_FOOT_OFFSET).
+    shoe(fh * PATTERN_FOOT_OFFSET, 8f)
+    shoe(fh * (1f - PATTERN_FOOT_OFFSET), -8f)
+    OverlayImage.fromBitmap(bitmap)
+} catch (_: Throwable) {
+    null
+}
+
+/**
+ * 경로 패턴용 동물 발바닥을 그립니다.
+ * 발바닥 두 개를 가로 중앙에 놓고 기울기만 ±8°로 번갈아 주어,
+ * 경로선을 얇게 유지하면서도 한 발씩 내딛는 걸음 리듬을 표현합니다.
+ */
+actual fun createPawprintOverlayImage(
+    widthDp: Float,
+    heightDp: Float,
+    color: Int,
+): OverlayImage? = try {
+    val w = widthDp.dpToPx().toInt().coerceAtLeast(4)
+    val h = heightDp.dpToPx().toInt().coerceAtLeast(4)
+    val fw = w.toFloat()
+    val fh = h.toFloat()
+    val bitmap = createBitmap(w, h)
+    val canvas = android.graphics.Canvas(bitmap)
+    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        style = android.graphics.Paint.Style.FILL
+    }
+    // 발바닥 한 개를 (cx, cy) 중심에 degrees만큼 기울여 그린다.
+    // 크기는 이미지 "너비"에서만 정해지므로 heightDp는 걸음 간격만 조절한다.
+    fun paw(cy: Float, degrees: Float) {
+        var pawW = fw * 0.874f           // 12° 기울여도 좌우가 잘리지 않는 최대 폭
+        var pawH = pawW * 0.80f          // 발바닥은 가로가 넓다
+        // heightDp가 권장 최소치보다 작으면 자국이 이미지 위아래로 잘린다.
+        // 잘리는 대신 자국을 줄여 형태를 온전히 유지한다.
+        val halfBound = (pawH * COS12 + pawW * SIN12) / 2f
+        val slot = fh * PATTERN_FOOT_OFFSET
+        if (halfBound > slot) {
+            val fit = slot / halfBound
+            pawW *= fit
+            pawH *= fit
+        }
+        canvas.save()
+        canvas.rotate(degrees, fw / 2f, cy)
+        canvas.translate((fw - pawW) / 2f, cy - pawH / 2f)
+        fun toe(tx: Float, ty: Float, rx: Float, ry: Float, deg: Float) {
+            canvas.save()
+            canvas.rotate(deg, tx, ty)
+            canvas.drawOval(tx - rx, ty - ry, tx + rx, ty + ry, paint)
+            canvas.restore()
+        }
+        toe(pawW * 0.330f, pawH * 0.185f, pawW * 0.130f, pawH * 0.180f, -8f)
+        toe(pawW * 0.670f, pawH * 0.185f, pawW * 0.130f, pawH * 0.180f, 8f)
+        toe(pawW * 0.130f, pawH * 0.420f, pawW * 0.115f, pawH * 0.155f, -32f)
+        toe(pawW * 0.870f, pawH * 0.420f, pawW * 0.115f, pawH * 0.155f, 32f)
+        val pad = android.graphics.Path().apply {
+            moveTo(pawW * 0.500f, pawH * 0.460f)
+            cubicTo(pawW * 0.596f, pawH * 0.460f, pawW * 0.668f, pawH * 0.507f, pawW * 0.716f, pawH * 0.585f)
+            cubicTo(pawW * 0.770f, pawH * 0.668f, pawW * 0.800f, pawH * 0.782f, pawW * 0.770f, pawH * 0.876f)
+            cubicTo(pawW * 0.740f, pawH * 0.954f, pawW * 0.644f, pawH * 0.980f, pawW * 0.500f, pawH * 0.980f)
+            cubicTo(pawW * 0.356f, pawH * 0.980f, pawW * 0.260f, pawH * 0.954f, pawW * 0.230f, pawH * 0.876f)
+            cubicTo(pawW * 0.200f, pawH * 0.782f, pawW * 0.230f, pawH * 0.668f, pawW * 0.284f, pawH * 0.585f)
+            cubicTo(pawW * 0.332f, pawH * 0.507f, pawW * 0.404f, pawH * 0.460f, pawW * 0.500f, pawH * 0.460f)
+            close()
+        }
+        canvas.drawPath(pad, paint)
+        canvas.restore()
+    }
+    // 두 발 위치는 SDK의 높이 축소를 상쇄하도록 계산된 값(≈18.3% / 81.7%).
+    // 유도 과정은 PATTERN_FOOT_OFFSET 주석 참고.
+    paw(fh * PATTERN_FOOT_OFFSET, 12f)
+    paw(fh * (1f - PATTERN_FOOT_OFFSET), -12f)
     OverlayImage.fromBitmap(bitmap)
 } catch (_: Throwable) {
     null
