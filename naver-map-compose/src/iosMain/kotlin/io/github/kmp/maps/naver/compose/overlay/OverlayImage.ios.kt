@@ -258,9 +258,10 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
     shadowColor: Int,
     tailHeightPx: Int,
     backgroundColor: Int,
+    cacheKey: String,
 ): OverlayImage? {
-    val cacheKey = "round:$url:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx:$backgroundColor"
-    return OverlayImageCache.getOrLoad(cacheKey) {
+    val fullCacheKey = "round:$cacheKey:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx:$backgroundColor"
+    return OverlayImageCache.getOrLoad(fullCacheKey) {
         suspendCancellableCoroutine { continuation ->
             val nsUrl = NSURL.URLWithString(url)
                 ?: run { continuation.resume(null); return@suspendCancellableCoroutine }
@@ -298,8 +299,8 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
     }
 }
 
-actual suspend fun downloadOverlayImageFromUrl(url: String): OverlayImage? {
-    return OverlayImageCache.getOrLoad("plain:$url") {
+actual suspend fun downloadOverlayImageFromUrl(url: String, cacheKey: String): OverlayImage? {
+    return OverlayImageCache.getOrLoad("plain:$cacheKey") {
         suspendCancellableCoroutine { continuation ->
             val nsUrl = NSURL.URLWithString(url)
             if (nsUrl == null) {

@@ -2,6 +2,14 @@
 
 이 프로젝트의 주요 변경 사항을 기록합니다. / Notable changes to this project.
 
+## [1.2.3]
+
+### Added (기능 추가)
+- **cacheKey 파라미터**: `rememberRoundOverlayImageFromUrl` / `rememberOverlayImageFromUrl` / `downloadRoundOverlayImageFromUrl` / `downloadOverlayImageFromUrl`에 `cacheKey` 파라미터 추가 (기본값: `url` — 기존 동작과 동일). CloudFront Signed URL처럼 호출마다 서명 쿼리가 달라지는 URL은 `url.substringBefore('?')` 등 안정적인 키를 전달하면 URL이 재서명되어도 메모리 캐시가 유지되어 재다운로드를 피할 수 있습니다.
+
+### Changed (동작 변경)
+- **URL 갱신 시 placeholder 리셋 방지**: `rememberRoundOverlayImageFromUrl`의 이미지 상태가 `url`이 아닌 `cacheKey` 스코프로 유지됩니다. 같은 `cacheKey`에서 URL만 바뀌면(재서명) 표시 중인 이미지를 placeholder로 되돌리지 않고 그대로 유지합니다. 로드 실패 후 URL이 갱신되면 새 URL로 재시도하는 동작은 그대로입니다.
+
 ## [1.2.2]
 
 ### Added (기능 추가)

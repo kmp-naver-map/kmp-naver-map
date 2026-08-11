@@ -40,18 +40,27 @@ expect fun rememberOverlayImage(
 
 /**
  * 외부 URL에서 이미지를 다운로드하여 [OverlayImage]를 반환하는 플랫폼별 suspend 함수입니다.
+ *
+ * @param cacheKey 메모리 캐시 키 (기본값: [url]).
+ *   CloudFront Signed URL처럼 호출마다 쿼리 파라미터(서명)가 달라지는 URL은
+ *   `url.substringBefore('?')` 등 안정적인 키를 전달해야 캐시가 유지됩니다.
  */
-expect suspend fun downloadOverlayImageFromUrl(url: String): OverlayImage?
+expect suspend fun downloadOverlayImageFromUrl(url: String, cacheKey: String = url): OverlayImage?
 
 /**
  * 외부 이미지 URL로부터 [OverlayImage]를 비동기로 로드하는 유틸리티 컴포저블입니다.
  * 로딩 중에는 null을 반환합니다.
+ *
+ * @param cacheKey 메모리 캐시 키 (기본값: [url]). Signed URL은 안정 키를 전달하세요.
  */
 @Composable
-fun rememberOverlayImageFromUrl(url: String): OverlayImage? {
-    var image by remember(url) { mutableStateOf<OverlayImage?>(null) }
-    LaunchedEffect(url) {
-        image = downloadOverlayImageFromUrl(url)
+fun rememberOverlayImageFromUrl(url: String, cacheKey: String = url): OverlayImage? {
+    // 상태는 cacheKey 스코프로 유지: 서명만 바뀐 URL 갱신 시 로딩 상태(null)로 되돌리지 않음
+    var image by remember(cacheKey) { mutableStateOf<OverlayImage?>(null) }
+    // url을 키로 유지: 캐시 히트 시 재실행 비용은 무시할 수준이고,
+    // 로드 실패 후 URL이 갱신(재서명)되면 새 URL로 재시도할 수 있음
+    LaunchedEffect(url, cacheKey) {
+        downloadOverlayImageFromUrl(url, cacheKey)?.let { image = it }
     }
     return image
 }
@@ -72,6 +81,10 @@ expect fun createWhiteRoundOverlayImage(
 
 /**
  * 외부 URL 이미지를 원형(+ 선택적 꼬리) 배경 안에 합성하여 [OverlayImage]를 반환하는 플랫폼별 suspend 함수입니다.
+ *
+ * @param cacheKey 메모리 캐시 키 (기본값: [url]).
+ *   CloudFront Signed URL처럼 호출마다 쿼리 파라미터(서명)가 달라지는 URL은
+ *   `url.substringBefore('?')` 등 안정적인 키를 전달해야 캐시가 유지됩니다.
  */
 expect suspend fun downloadRoundOverlayImageFromUrl(
     url: String,
@@ -83,6 +96,7 @@ expect suspend fun downloadRoundOverlayImageFromUrl(
     shadowColor: Int,
     tailHeightPx: Int,
     backgroundColor: Int,
+    cacheKey: String = url,
 ): OverlayImage?
 
 /**
@@ -229,6 +243,9 @@ fun tearDropAnchor(
  * @param shadowColor 그림자 색상 ARGB (기본 0x40000000 = 반투명 검정)
  * @param tailHeightPx 원 아래로 튀어나오는 꼬리 높이 (기본 20px, 0 = 꼬리 없음)
  * @param backgroundColor teardrop 배경 색상 ARGB (기본 0xFFFFFFFF = 흰색)
+ * @param cacheKey 메모리 캐시 키 (기본값: [url]).
+ *   CloudFront Signed URL처럼 호출마다 쿼리 파라미터(서명)가 달라지는 URL은
+ *   `url?.substringBefore('?')` 등 안정적인 키를 전달해야 데이터 갱신 시 재다운로드를 피할 수 있습니다.
  * @param onError 이미지 로드 실패 시 호출되는 콜백. Signed URL 만료 시 URL 갱신 용도로 활용 가능.
  */
 @Composable
@@ -242,6 +259,7 @@ fun rememberRoundOverlayImageFromUrl(
     shadowColor: Int = 0x40000000,
     tailHeightPx: Int = 20,
     backgroundColor: Int = 0xFFFFFFFF.toInt(),
+    cacheKey: String? = url,
     onError: (() -> Unit)? = null,
 ): OverlayImage? {
     // Phase 1: teardrop을 동기적으로 즉시 생성.
@@ -253,14 +271,20 @@ fun rememberRoundOverlayImageFromUrl(
         }
     }
 
-    // Phase 2: URL이 바뀌면 placeholder로 초기화 → 비동기로 이미지 로드 후 교체
+    // Phase 2: 새 이미지가 필요하면 placeholder로 초기화 → 비동기로 이미지 로드 후 교체
     // url이 null이면 placeholder를 그대로 유지
-    var image by remember(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
+    // 상태는 cacheKey 스코프: 서명 쿼리만 바뀐 URL 갱신 시 placeholder로 되돌리지 않음
+    var image by remember(cacheKey, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
         mutableStateOf<OverlayImage?>(placeholder)
     }
-    LaunchedEffect(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
+    // url을 키에 유지: 캐시 히트 시 재실행은 네트워크 없이 즉시 끝나고,
+    // 로드 실패 후 URL이 갱신(재서명)되면 새 URL로 재시도할 수 있음
+    LaunchedEffect(url, cacheKey, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
         if (url != null) {
-            val result = downloadRoundOverlayImageFromUrl(url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor)
+            val result = downloadRoundOverlayImageFromUrl(
+                url, sizePx, borderWidthPx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor,
+                cacheKey = cacheKey ?: url,
+            )
             if (result != null) {
                 image = result
             } else {
