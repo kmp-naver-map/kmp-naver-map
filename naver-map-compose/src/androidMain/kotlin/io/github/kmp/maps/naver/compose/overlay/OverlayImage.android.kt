@@ -223,8 +223,15 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
     return OverlayImageCache.getOrLoad(fullCacheKey) {
         withContext(Dispatchers.IO) {
             try {
-                val srcBitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
-                    ?: return@withContext null
+                // 1) 디스크 캐시 → 2) 네트워크(성공 시 원본 바이트를 디스크에 저장)
+                var srcBitmap = ImageDiskCache.read(cacheKey)
+                    ?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+                if (srcBitmap == null) {
+                    val bytes = java.net.URL(url).openStream().use { it.readBytes() }
+                    srcBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (srcBitmap != null) ImageDiskCache.write(cacheKey, bytes)
+                }
+                if (srcBitmap == null) return@withContext null
                 val bitmap = buildTearDropBitmap(
                     sizePx          = sizePx,
                     shadowRadiusPx  = shadowRadiusPx,
@@ -250,7 +257,14 @@ actual suspend fun downloadOverlayImageFromUrl(url: String, cacheKey: String): O
     return OverlayImageCache.getOrLoad("plain:$cacheKey") {
         withContext(Dispatchers.IO) {
             try {
-                val bitmap = java.net.URL(url).openStream().use { BitmapFactory.decodeStream(it) }
+                // 1) 디스크 캐시 → 2) 네트워크(성공 시 원본 바이트를 디스크에 저장)
+                var bitmap = ImageDiskCache.read(cacheKey)
+                    ?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+                if (bitmap == null) {
+                    val bytes = java.net.URL(url).openStream().use { it.readBytes() }
+                    bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (bitmap != null) ImageDiskCache.write(cacheKey, bytes)
+                }
                 bitmap?.let { OverlayImage(NativeOverlayImage.fromBitmap(it)) }
             } catch (e: Throwable) {
                 // OutOfMemoryError(Error)도 포함하여 크래시 방지

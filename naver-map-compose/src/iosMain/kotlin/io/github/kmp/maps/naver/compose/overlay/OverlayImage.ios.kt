@@ -14,7 +14,9 @@ import cocoapods.NMapsMap.NMFOverlayImage
 import cocoapods.NMapsMap.NMF_MARKER_IMAGE_DEFAULT
 import io.github.kmp.maps.naver.compose.internal.toUIColor
 import io.github.kmp.maps.naver.compose.internal.toUIImage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import platform.CoreGraphics.CGContextAddEllipseInRect
@@ -262,6 +264,28 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
 ): OverlayImage? {
     val fullCacheKey = "round:$cacheKey:$sizePx:$borderWidthPx:$shadowRadiusPx:$shadowDx:$shadowDy:$shadowColor:$tailHeightPx:$backgroundColor"
     return OverlayImageCache.getOrLoad(fullCacheKey) {
+        // 1) 디스크 캐시: 원본 바이트가 있으면 네트워크 없이 합성만 수행
+        val cachedResult = withContext(Dispatchers.Default) {
+            ImageDiskCache.read(cacheKey)
+                ?.let { bytes -> UIImage(data = bytes.toNSData()) }
+                ?.let { src ->
+                    drawTearDropUIImage(
+                        sizePx          = sizePx,
+                        shadowRadiusPx  = shadowRadiusPx,
+                        shadowDx        = shadowDx,
+                        shadowDy        = shadowDy,
+                        shadowColor     = shadowColor,
+                        tailHeightPx    = tailHeightPx,
+                        srcImage        = src,
+                        borderWidthPx   = borderWidthPx,
+                        backgroundColor = backgroundColor,
+                    )
+                }
+                ?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }
+        }
+        if (cachedResult != null) return@getOrLoad cachedResult
+
+        // 2) 네트워크: 성공 시 원본 바이트를 디스크에 저장
         suspendCancellableCoroutine { continuation ->
             val nsUrl = NSURL.URLWithString(url)
                 ?: run { continuation.resume(null); return@suspendCancellableCoroutine }
@@ -279,6 +303,9 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
                 }
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)!!) {
                     val srcImage = UIImage(data = data)
+                    if (srcImage != null) {
+                        ImageDiskCache.write(cacheKey, data.toByteArray())
+                    }
                     val uiImage = drawTearDropUIImage(
                         sizePx          = sizePx,
                         shadowRadiusPx  = shadowRadiusPx,
@@ -301,6 +328,15 @@ actual suspend fun downloadRoundOverlayImageFromUrl(
 
 actual suspend fun downloadOverlayImageFromUrl(url: String, cacheKey: String): OverlayImage? {
     return OverlayImageCache.getOrLoad("plain:$cacheKey") {
+        // 1) 디스크 캐시
+        val cachedResult = withContext(Dispatchers.Default) {
+            ImageDiskCache.read(cacheKey)
+                ?.let { bytes -> UIImage.imageWithData(bytes.toNSData()) }
+                ?.let { OverlayImage(NMFOverlayImage.overlayImageWithImage(it)) }
+        }
+        if (cachedResult != null) return@getOrLoad cachedResult
+
+        // 2) 네트워크: 성공 시 원본 바이트를 디스크에 저장
         suspendCancellableCoroutine { continuation ->
             val nsUrl = NSURL.URLWithString(url)
             if (nsUrl == null) {
@@ -322,6 +358,7 @@ actual suspend fun downloadOverlayImageFromUrl(url: String, cacheKey: String): O
                     continuation.resume(null)
                     return@dataTaskWithURL
                 }
+                ImageDiskCache.write(cacheKey, data.toByteArray())
                 continuation.resume(OverlayImage(NMFOverlayImage.overlayImageWithImage(image)))
             }
             task.resume()

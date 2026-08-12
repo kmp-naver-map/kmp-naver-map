@@ -41,7 +41,8 @@ expect fun rememberOverlayImage(
 /**
  * 외부 URL에서 이미지를 다운로드하여 [OverlayImage]를 반환하는 플랫폼별 suspend 함수입니다.
  *
- * @param cacheKey 메모리 캐시 키 (기본값: [url]).
+ * @param cacheKey 메모리·디스크 캐시 키 (기본값: [url]).
+ *   원본 이미지는 이 키로 디스크에도 캐시되어 앱 재시작 후에도 네트워크 없이 복원됩니다.
  *   CloudFront Signed URL처럼 호출마다 쿼리 파라미터(서명)가 달라지는 URL은
  *   `url.substringBefore('?')` 등 안정적인 키를 전달해야 캐시가 유지됩니다.
  */
@@ -51,10 +52,13 @@ expect suspend fun downloadOverlayImageFromUrl(url: String, cacheKey: String = u
  * 외부 이미지 URL로부터 [OverlayImage]를 비동기로 로드하는 유틸리티 컴포저블입니다.
  * 로딩 중에는 null을 반환합니다.
  *
- * @param cacheKey 메모리 캐시 키 (기본값: [url]). Signed URL은 안정 키를 전달하세요.
+ * @param cacheKey 메모리·디스크 캐시 키 (기본값: [url]).
+ *   원본 이미지는 이 키로 디스크에도 캐시되어 앱 재시작 후에도 네트워크 없이 복원됩니다. Signed URL은 안정 키를 전달하세요.
  */
 @Composable
 fun rememberOverlayImageFromUrl(url: String, cacheKey: String = url): OverlayImage? {
+    // 디스크 캐시 준비(Android: applicationContext 확보). 다운로드보다 먼저 실행된다.
+    InitImageDiskCache()
     // 상태는 cacheKey 스코프로 유지: 서명만 바뀐 URL 갱신 시 로딩 상태(null)로 되돌리지 않음
     var image by remember(cacheKey) { mutableStateOf<OverlayImage?>(null) }
     // url을 키로 유지: 캐시 히트 시 재실행 비용은 무시할 수준이고,
@@ -82,7 +86,8 @@ expect fun createWhiteRoundOverlayImage(
 /**
  * 외부 URL 이미지를 원형(+ 선택적 꼬리) 배경 안에 합성하여 [OverlayImage]를 반환하는 플랫폼별 suspend 함수입니다.
  *
- * @param cacheKey 메모리 캐시 키 (기본값: [url]).
+ * @param cacheKey 메모리·디스크 캐시 키 (기본값: [url]).
+ *   원본 이미지는 이 키로 디스크에도 캐시되어 앱 재시작 후에도 네트워크 없이 복원됩니다.
  *   CloudFront Signed URL처럼 호출마다 쿼리 파라미터(서명)가 달라지는 URL은
  *   `url.substringBefore('?')` 등 안정적인 키를 전달해야 캐시가 유지됩니다.
  */
@@ -243,7 +248,8 @@ fun tearDropAnchor(
  * @param shadowColor 그림자 색상 ARGB (기본 0x40000000 = 반투명 검정)
  * @param tailHeightPx 원 아래로 튀어나오는 꼬리 높이 (기본 20px, 0 = 꼬리 없음)
  * @param backgroundColor teardrop 배경 색상 ARGB (기본 0xFFFFFFFF = 흰색)
- * @param cacheKey 메모리 캐시 키 (기본값: [url]).
+ * @param cacheKey 메모리·디스크 캐시 키 (기본값: [url]).
+ *   원본 이미지는 이 키로 디스크에도 캐시되어 앱 재시작 후에도 네트워크 없이 복원됩니다.
  *   CloudFront Signed URL처럼 호출마다 쿼리 파라미터(서명)가 달라지는 URL은
  *   `url?.substringBefore('?')` 등 안정적인 키를 전달해야 데이터 갱신 시 재다운로드를 피할 수 있습니다.
  * @param onError 이미지 로드 실패 시 호출되는 콜백. Signed URL 만료 시 URL 갱신 용도로 활용 가능.
@@ -262,6 +268,9 @@ fun rememberRoundOverlayImageFromUrl(
     cacheKey: String? = url,
     onError: (() -> Unit)? = null,
 ): OverlayImage? {
+    // 디스크 캐시 준비(Android: applicationContext 확보). 다운로드보다 먼저 실행된다.
+    InitImageDiskCache()
+
     // Phase 1: teardrop을 동기적으로 즉시 생성.
     // PlaceholderCache를 통해 동일 스타일의 마커들이 같은 인스턴스를 공유합니다.
     val placeholder = remember(sizePx, shadowRadiusPx, shadowDx, shadowDy, shadowColor, tailHeightPx, backgroundColor) {
