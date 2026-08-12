@@ -16,6 +16,14 @@ internal object AppContextHolder {
     var appContext: Context? = null
 }
 
+/**
+ * 디스크 캐시를 컴포지션 밖(앱 시작 직후 프리페치 등)에서도 쓰려면 앱 시작 시 호출하세요.
+ * 컴포저블 경로([rememberRoundOverlayImageFromUrl] 등)만 쓴다면 자동 초기화되므로 불필요합니다.
+ */
+fun initNaverMapImageDiskCache(context: Context) {
+    AppContextHolder.appContext = context.applicationContext
+}
+
 @Composable
 internal actual fun InitImageDiskCache() {
     val context = LocalContext.current.applicationContext
