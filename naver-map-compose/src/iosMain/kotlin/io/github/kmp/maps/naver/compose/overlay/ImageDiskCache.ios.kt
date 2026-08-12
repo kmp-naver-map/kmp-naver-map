@@ -3,9 +3,15 @@
 package io.github.kmp.maps.naver.compose.overlay
 
 import androidx.compose.runtime.Composable
+import kotlin.coroutines.resume
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
+import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.Foundation.NSHTTPURLResponse
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLSession
+import platform.Foundation.dataTaskWithURL
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSData
 import platform.Foundation.NSDate
@@ -23,6 +29,22 @@ import platform.posix.memcpy
 internal actual fun InitImageDiskCache() {
     // iOS는 Caches 디렉터리 접근에 별도 준비가 필요 없다.
 }
+
+internal actual suspend fun downloadImageBytes(url: String): ByteArray? =
+    suspendCancellableCoroutine { continuation ->
+        val nsUrl = NSURL.URLWithString(url)
+            ?: run { continuation.resume(null); return@suspendCancellableCoroutine }
+        val task = NSURLSession.sharedSession.dataTaskWithURL(nsUrl) { data, response, error ->
+            val statusCode = (response as? NSHTTPURLResponse)?.statusCode?.toInt() ?: 200
+            if (error != null || data == null || statusCode !in 200..299) {
+                continuation.resume(null)
+            } else {
+                continuation.resume(data.toByteArray().takeIf { it.isNotEmpty() })
+            }
+        }
+        task.resume()
+        continuation.invokeOnCancellation { task.cancel() }
+    }
 
 internal actual object ImageDiskCache {
     private const val DIR_NAME = "kmp_naver_map_images"

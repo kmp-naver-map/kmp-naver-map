@@ -1,6 +1,7 @@
 package io.github.kmp.maps.naver.compose.overlay
 
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.sync.Semaphore
 
 /**
  * URL 마커 이미지 **원본 바이트**의 디스크 캐시.
@@ -29,6 +30,35 @@ internal expect object ImageDiskCache {
  */
 @Composable
 internal expect fun InitImageDiskCache()
+
+/**
+ * 마커 이미지 원본을 **디스크 캐시에만** 미리 받아둔다.
+ *
+ * 오버레이 합성이나 지도 SDK 객체 생성을 하지 않으므로 지도 진입 전
+ * 백그라운드 프리페치에 안전하다. (지도 SDK 객체를 지도 초기화 전에
+ * 백그라운드 스레드에서 만들면 SDK 네이티브가 잘못된 스레드에서 초기화되어
+ * 이후 지도 진입 시 크래시할 수 있다 — Android에서 실제 발생.)
+ *
+ * 이미 캐시돼 있으면 네트워크 없이 즉시 반환한다. 실패는 조용히 무시된다.
+ *
+ * @param cacheKey Signed URL은 서명 쿼리를 뗀 안정 키를 전달할 것.
+ */
+suspend fun prefetchOverlayImageToDisk(url: String, cacheKey: String = url) {
+    prefetchSemaphore.acquire()
+    try {
+        if (ImageDiskCache.read(cacheKey) != null) return
+        val bytes = downloadImageBytes(url) ?: return
+        ImageDiskCache.write(cacheKey, bytes)
+    } finally {
+        prefetchSemaphore.release()
+    }
+}
+
+/** 프리페치 동시 다운로드 상한 — [OverlayImageCache]의 다운로드 제한과 동일한 취지. */
+private val prefetchSemaphore = Semaphore(4)
+
+/** URL에서 이미지 바이트를 내려받는다. 실패(네트워크·HTTP 오류) 시 null. */
+internal expect suspend fun downloadImageBytes(url: String): ByteArray?
 
 /**
  * 캐시 키를 파일시스템에 안전한 파일명으로 변환 (FNV-1a 64bit hex).

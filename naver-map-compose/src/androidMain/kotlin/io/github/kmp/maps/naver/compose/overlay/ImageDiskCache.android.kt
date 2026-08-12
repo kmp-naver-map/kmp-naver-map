@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 디스크 캐시가 사용할 applicationContext.
@@ -29,6 +31,15 @@ internal actual fun InitImageDiskCache() {
     val context = LocalContext.current.applicationContext
     SideEffect { AppContextHolder.appContext = context }
 }
+
+internal actual suspend fun downloadImageBytes(url: String): ByteArray? =
+    withContext(Dispatchers.IO) {
+        try {
+            java.net.URL(url).openStream().use { it.readBytes() }.takeIf { it.isNotEmpty() }
+        } catch (_: Throwable) {
+            null
+        }
+    }
 
 internal actual object ImageDiskCache {
     private const val DIR_NAME = "kmp_naver_map_images"
@@ -68,7 +79,8 @@ internal actual object ImageDiskCache {
             // 임시 파일 후 rename — 도중 크래시로 깨진 파일이 남지 않도록.
             // 같은 이미지를 다른 스타일 파라미터로 동시에 로드하면 같은 key에 동시 쓰기가
             // 가능하므로(in-flight 중복 방지는 fullCacheKey 단위) tmp 파일명은 유니크하게.
-            val tmp = File.createTempFile("dl", ".tmp", d)
+            // 주의: createTempFile prefix는 3글자 이상이어야 한다(짧으면 IllegalArgumentException)
+            val tmp = File.createTempFile("img", ".tmp", d)
             tmp.writeBytes(bytes)
             if (!tmp.renameTo(File(d, diskCacheFileName(key)))) {
                 runCatching { tmp.delete() }
